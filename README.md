@@ -29,8 +29,7 @@
 
 ##### 固件下载:
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/OpenWrt?style=for-the-badge&label=Download)](https://github.com/kenzok78/Bulid_Wrt/actions)
-
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/Bulid_Wrt?style=for-the-badge&label=Download)](https://github.com/kenzok78/Bulid_Wrt/actions)
 ##### 特色:
 
 + 官网源码,内核升级到5.4. 最新源码同步.
