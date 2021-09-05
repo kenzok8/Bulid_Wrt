@@ -29,7 +29,7 @@
 
 ##### 固件下载:
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/OpenWrt?style=for-the-badge&label=Download)](https://github.com/kenzok78/OpenWrt/actions)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/OpenWrt?style=for-the-badge&label=Download)](https://github.com/kenzok78/Bulid_Wrt/actions)
 
 ##### 特色:
 
@@ -66,7 +66,7 @@
 ##### 默认插件包含:
 
 + Opkg 软件包管理
-+ SSR-PLUS
++ ssr-plus
 + openclash
 + passwall
 + bypass
