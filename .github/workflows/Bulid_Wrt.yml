@@ -1,0 +1,258 @@
+#=================================================
+# https://github.com/P3TERX/Actions-OpenWrt
+# Description: Build OpenWrt using GitHub Actions
+# Lisence: MIT
+# Author: P3TERX
+# Blog: https://p3terx.com
+#=================================================
+
+name: Build OpenWrt
+
+on: 
+  repository_dispatch:
+
+env:
+  REPO_TOKEN: ${{ secrets.REPO_TOKEN }}
+  PPPOE_USERNAME: ${{ secrets.PPPOE_USERNAME }}
+  PPPOE_PASSWD: ${{ secrets.PPPOE_PASSWD }}
+  SCKEY: ${{ secrets.SCKEY }}
+  TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+  TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: Ubuntu-20.04
+    
+    name: Build ${{matrix.target}}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ["${{ github.event.client_payload.target }}"]
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@main
+
+    - name: cancel running workflows
+      uses: styfle/cancel-workflow-action@main
+      if: contains(github.event.action, 'cw')
+      with:
+        workflow_id: 9397633
+        access_token: ${{ github.token }}
+
+    - name: Load Settings.ini
+      run: |
+        source "${GITHUB_WORKSPACE}/devices/common/settings.ini"
+        if [ -f "devices/${{matrix.target}}/settings.ini" ]; then
+          source "${GITHUB_WORKSPACE}/devices/${{matrix.target}}/settings.ini"
+        fi
+        echo "REPO_URL=${REPO_URL}" >> $GITHUB_ENV
+        echo "REPO_BRANCH=${REPO_BRANCH}" >> $GITHUB_ENV
+        echo "CONFIG_FILE=${CONFIG_FILE}" >> $GITHUB_ENV
+        echo "DIY_SH=${DIY_SH}" >> $GITHUB_ENV
+        echo "FREE_UP_DISK=${FREE_UP_DISK}" >> $GITHUB_ENV
+        echo "UPLOAD_BIN_DIR_FOR_ARTIFACT=${UPLOAD_BIN_DIR_FOR_ARTIFACT}" >> $GITHUB_ENV
+        echo "UPLOAD_FIRMWARE_FOR_ARTIFACT=${UPLOAD_FIRMWARE_FOR_ARTIFACT}" >> $GITHUB_ENV
+        echo "UPLOAD_FIRMWARE_FOR_RELEASE=${UPLOAD_FIRMWARE_FOR_RELEASE}" >> $GITHUB_ENV
+        echo "UPLOAD_FIRMWARE_TO_COWTRANSFER=${UPLOAD_FIRMWARE_TO_COWTRANSFER}" >> $GITHUB_ENV
+        echo "UPLOAD_FIRMWARE_TO_WETRANSFER=${UPLOAD_FIRMWARE_TO_WETRANSFER}" >> $GITHUB_ENV
+
+    - name: Trigger Packages Update
+      run: |
+        gitdate=$(curl -s "https://api.github.com/repos/kenzok8/jell/actions/runs" | jq -r '.workflow_runs[0].created_at')
+        gitdate=$(date -d "$gitdate" +%s)
+        now=$(date -d "$(date '+%Y-%m-%d %H:%M:%S')" +%s)
+        if [[ $(expr $gitdate + 300) < $now ]]; then
+          curl -X POST https://api.github.com/repos/kenzok8/jell/dispatches \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
+          --data '{"event_type": "update"}'
+        fi
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        ( sudo -E apt-get -qq update
+        sudo -E apt-get -qq install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx-ucl libelf-dev autoconf automake libtool autopoint device-tree-compiler ccache xsltproc rename antlr3 gperf wget curl swig rsync
+        sudo -E apt-get -qq purge azure-cli ghc* zulu* hhvm llvm* firefox powershell openjdk* dotnet* google* mysql* php* android*
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq autoremove --purge
+        sudo -E apt-get -qq clean ) &
+        sudo timedatectl set-timezone "$TZ"
+    
+    - name: Get current date
+      id: date
+      run: |
+        echo "date=$(date +'%m/%d_%Y_%H/%M')" >> $GITHUB_ENV
+        echo "date2=$(date +'%m/%d %Y')" >> $GITHUB_ENV
+        echo "date3=$(date +'%m.%d')" >> $GITHUB_ENV
+        echo "date4=$(date +'%m.%d.%Y')" >> $GITHUB_ENV
+
+    - name: Clone source code
+      run: |
+        [ "$REPO_BRANCH" ] ||
+            REPO_BRANCH="$(git ls-remote --tags git://github.com/openwrt/openwrt | cut -d/ -f3- | sort -t. -nk1,2 | awk '/^[^{]*$/{version=$1}END{print version}' | sed -e 's/v//')"
+        git clone --depth 1 $REPO_URL -b v$REPO_BRANCH openwrt
+        cd openwrt
+        if [[ ${{matrix.target}} == "x86_64" ]]; then
+            wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-$REPO_BRANCH-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/x86/64/openwrt-sdk-21.02-SNAPSHOT-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        elif [[ ${{matrix.target}} =~ (nanopi-r2s|nanopi-r4s) ]]; then
+            wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-$REPO_BRANCH-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/rockchip/armv8/openwrt-sdk-21.02-SNAPSHOT-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        elif [[ ${{matrix.target}} =~ "Rpi-4B" ]]; then
+            wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-$REPO_BRANCH-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/bcm27xx/bcm2711/openwrt-sdk-21.02-SNAPSHOT-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        fi
+        echo "REPO_BRANCH=v$REPO_BRANCH" >> $GITHUB_ENV
+      
+    - name: Free up disk space
+      if: env.FREE_UP_DISK == 'true'
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo mkdir -p -m 777 /mnt/openwrt/dl /mnt/openwrt/staging_dir /mnt/openwrt/build_dir/hostpkg openwrt/build_dir
+        ln -sf /mnt/openwrt/dl openwrt/dl
+        ln -sf /mnt/openwrt/staging_dir openwrt/staging_dir
+        ln -sf /mnt/openwrt/build_dir/hostpkg openwrt/build_dir/hostpkg
+        
+
+    - name: Load custom configuration
+      run: |
+        cp -rf devices/common/. openwrt/
+        cp -rf devices/${{matrix.target}}/. openwrt/
+        cp -rf devices openwrt/
+        cd openwrt
+        chmod +x devices/common/$DIY_SH
+        /bin/bash "devices/common/$DIY_SH"
+        cp -Rf ./diy/* ./
+        if [ -f "devices/${{matrix.target}}/$DIY_SH" ]; then
+          chmod +x devices/${{matrix.target}}/$DIY_SH
+          /bin/bash "devices/${{matrix.target}}/$DIY_SH"
+        fi
+        cp -f devices/common/default-settings package/*/*/default-settings/files/uci.defaults
+        if [ -f "devices/${{matrix.target}}/default-settings" ]; then
+          echo >> package/*/*/default-settings/files/uci.defaults
+          cat devices/${{matrix.target}}/default-settings >> package/*/*/default-settings/files/uci.defaults
+        fi
+        cp -f devices/common/$CONFIG_FILE .config
+        if [ -f "devices/${{matrix.target}}/$CONFIG_FILE" ]; then
+          echo >> .config
+          cat devices/${{matrix.target}}/$CONFIG_FILE >> .config
+        fi
+
+    - name: Apply patches
+      run: |
+        cd openwrt
+        find "devices/common/patches" -type f ! -path 'devices/common/patches/china_mirrors.patch' -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward --no-backup-if-mismatch"
+        if [ -n "$(ls -A "devices/${{matrix.target}}/patches" 2>/dev/null)" ]; then
+          find "devices/${{matrix.target}}/patches" -type f -name '*.patch' ! -name '*.revert.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward --no-backup-if-mismatch"
+        fi
+        
+    - name: Default PPPOE Setting
+      if: env.PPPOE_USERNAME && env.PPPOE_PASSWD
+      run: |
+        sed -i '$i uci set network.wan.username=${{ env.PPPOE_USERNAME }}' openwrt/package/*/*/default-settings/files/uci.defaults
+        sed -i '$i uci set network.wan.password=${{ env.PPPOE_PASSWD }}' openwrt/package/*/*/default-settings/files/uci.defaults
+        sed -i '$i uci commit network' openwrt/package/*/*/default-settings/files/uci.defaults
+              
+    - name: SSH connection to Actions
+      uses: kenzok78/debugger-action@master
+      if: contains(github.event.action, 'ssh')
+
+    - name: Download package
+      id: package
+      run: |
+        cd openwrt
+        make defconfig
+        make download -j$(($(nproc)+1)) &
+
+    - name: Compile the firmware
+      id: compile
+      run: |
+        cd openwrt
+        echo -e "$(($(nproc)+1)) thread compile"
+        make -j$(($(nproc)+1)) || make -j1 V=s
+        echo "::set-output name=status::success"
+   
+    - name: Check space usage
+      run: df -hT
+   
+    - name: Upload bin directory
+      uses: actions/upload-artifact@main
+      if: env.UPLOAD_BIN_DIR_FOR_ARTIFACT == 'true'
+      with:
+        name: OpenWrt_bin_${{matrix.target}}
+        path: openwrt/bin
+
+    - name: Organize files
+      id: organize
+      run: |
+        mkdir firmware
+        mv -f openwrt/bin/targets/*/*/{*combined*,*sysupgrade*} ./firmware/ 2>/dev/null || true
+        cp openwrt/.config  ./firmware/${{matrix.target}}.config
+        cd firmware
+        echo ${{ env.date4 }} > version.txt
+        rename -v "s/^openwrt/${{ env.date3 }}-openwrt/" *
+        rename -v "s/friendlyarm_//" *gz
+        md5=$((md5sum *squashfs-sysupgrade* || md5sum *squashfs-combined-efi*) | awk '{print $1}') 2>/dev/null
+        echo $md5 >> version.txt
+        echo $REPO_BRANCH >> version.txt
+        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
+        echo "EMOJI=${Emoji[$[$RANDOM % ${#Emoji[@]}]]}" >> $GITHUB_ENV
+        if [ ${{matrix.target}} == "x86_64" ]; then
+        echo "NOTICE=请分配不少于1G的存储容量" >> $GITHUB_ENV
+        fi
+
+    - name: Create release
+      id: create_release
+      if: env.REPO_TOKEN && env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
+      continue-on-error: true
+      run: |
+        echo -e "墙内加速下载 💋:\n" >> release.txt
+        echo -e "[腾讯云] (https://op.supes.top/firmware/${{matrix.target}}/ ☁)\n" >> release.txt
+        [ ${{ env.WETRANS }} ] && echo -e "[WeTransfer] (${{ env.WETRANS }} 🗽)\n" >> release.txt
+        [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🐮)\n" >> release.txt
+        [ ${{ env.NOTICE }} ] && echo -e "${{ env.NOTICE }}" >> release.txt || true
+
+    - name: Upload firmware for release
+      uses: softprops/action-gh-release@master
+      continue-on-error: true
+      if: env.REPO_TOKEN && env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+      with:
+        files: "${{ env.FIRMWARE }}/*"
+        name: ${{ env.date2 }} ${{matrix.target}} ${{ env.EMOJI }}
+        tag_name: ${{ env.date }}_${{matrix.target}}
+        body_path: release.txt
+        
+    - name: WeChat notification
+      continue-on-error: true
+      if: env.SCKEY
+      run: |
+        # [ steps.compile.outputs.status == 'success' ] && curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=🎉OpenWrt_${{ env.date3 }}_${{matrix.target}}编译完成😋|| curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=❌OpenWrt_${{ env.date3 }}_${{matrix.target}}编译失败😂
+
+    - name: Telegram notification
+      if: env.TELEGRAM_TOKEN && ! contains(github.event.action, 'notg')
+      continue-on-error: true
+      run: |
+        [ steps.compile.outputs.status == 'success' ] && curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.date3 }} ${{matrix.target}} 编译成功 😋  https://op.supes.top/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" || curl -k --data chat_id="${{ secrets.TELEGRAM_TO }}" --data "text=❌ OpenWrt ${{ env.date3 }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage"
+
+    - name: Delete workflow runs
+      uses: GitRML/delete-workflow-runs@main
+      continue-on-error: true
+      with:
+        retain_days: 2
+        keep_minimum_runs: 0
+
+    - name: Remove old Releases
+      uses: dev-drprasad/delete-older-releases@master
+      continue-on-error: true
+      if: env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true' && !cancelled()
+      with:
+        keep_latest: 2
+        delete_tags: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
