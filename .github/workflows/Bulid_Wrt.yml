@@ -34,6 +34,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@main
+      with:
+          fetch-depth: 0
 
     - name: cancel running workflows
       uses: styfle/cancel-workflow-action@main
@@ -105,7 +107,7 @@ jobs:
             wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-$REPO_BRANCH-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || wget -cO sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/bcm27xx/bcm2711/openwrt-sdk-21.02-SNAPSHOT-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         fi
         echo "REPO_BRANCH=v$REPO_BRANCH" >> $GITHUB_ENV
-      
+        
     - name: Free up disk space
       if: env.FREE_UP_DISK == 'true'
       env:
@@ -160,6 +162,12 @@ jobs:
       uses: kenzok78/debugger-action@master
       if: contains(github.event.action, 'ssh')
 
+    - name: Cache
+      uses: klever1988/cachewrtbuild@main
+      with:
+        ccache: 'true'
+        prefix: ${{ github.workspace }}/openwrt
+
     - name: Download package
       id: package
       run: |
@@ -205,12 +213,51 @@ jobs:
         echo "NOTICE=请分配不少于1G的存储容量" >> $GITHUB_ENV
         fi
 
+    - name: Deploy files to server
+      uses: easingthemes/ssh-deploy@main
+      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        ARGS: "-avzr --exclude="
+        SOURCE: firmware/
+        REMOTE_HOST: op.supes.top
+        REMOTE_USER: root
+        TARGET: "/www/wwwroot/op.supes.top/firmware/${{matrix.target}}/"
+
+    - name: Upload firmware for artifact
+      uses: actions/upload-artifact@main
+      continue-on-error: true
+      if: env.UPLOAD_FIRMWARE_FOR_ARTIFACT == 'true'
+      with:
+        name: ${{ env.date3 }} ${{matrix.target}}
+        path: ${{ env.FIRMWARE }}
+
+    - name: Upload firmware to cowtransfer
+      if: env.UPLOAD_FIRMWARE_TO_COWTRANSFER == 'true'
+      continue-on-error: true
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        cowurl=$(./transfer cow --block 2621440 -s --no-progress ${FIRMWARE})
+        cowurl=$(echo $cowurl | grep -o -E "https[^ ]*")
+        echo "COWURL=$cowurl" >> $GITHUB_ENV
+        echo "Download Link: ${{ env.EMOJI }} $cowurl ${{ env.EMOJI }} 🚀"
+ 
+    - name: Upload firmware to WeTransfer
+      if: env.UPLOAD_FIRMWARE_TO_WETRANSFER == 'true' && ! contains(github.event.action, 'noup')
+      continue-on-error: true
+      run: |
+        curl -fsSL git.io/file-transfer | sh
+        wetrans=$(./transfer wet -s -p 16 --no-progress ${FIRMWARE})
+        wetrans=$(echo $wetrans | grep -o -E "https[^ ]*")
+        echo "WETRANS=$wetrans" >> $GITHUB_ENV
+        echo "Download Link: ${{ env.EMOJI }} $wetrans ${{ env.EMOJI }} 🚀"
+
     - name: Create release
       id: create_release
       if: env.REPO_TOKEN && env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
       continue-on-error: true
       run: |
-        echo -e "墙内加速下载 💋:\n" >> release.txt
+        echo -e "墙内加速下载 🚀:\n" >> release.txt
         echo -e "[腾讯云] (https://op.supes.top/firmware/${{matrix.target}}/ ☁)\n" >> release.txt
         [ ${{ env.WETRANS }} ] && echo -e "[WeTransfer] (${{ env.WETRANS }} 🗽)\n" >> release.txt
         [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🐮)\n" >> release.txt
