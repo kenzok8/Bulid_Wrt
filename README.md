@@ -1,20 +1,20 @@
-### Actions OpenWrt Snapshot
+### Bulid_Wrt 官方源码
 [1]: https://img.shields.io/badge/license-GPLV2-brightgreen.svg
 [2]: /LICENSE
 [3]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg
-[4]: https://github.com/kenzok78/OpenWrt/pulls
+[4]: https://github.com/kenzok78/Bulid_Wrt/pulls
 [5]: https://img.shields.io/badge/Issues-welcome-brightgreen.svg
-[6]: https://github.com/kenzok78/OpenWrt/issues/new
+[6]: https://github.com/kenzok78/Bulid_Wrt/issues/new
 [7]: https://img.shields.io/github/v/release/hyird/Action-Openwrt
-[8]: https://github.com/kenzok78/OpenWrt/releases
+[8]: https://github.com/kenzok78/Bulid_Wrt/releases
 [10]: https://img.shields.io/badge/Contact-telegram-blue
 [11]: https://t.me/joinchat/JjxmyRZZXJWb74I-sCrryA
-[12]: https://github.com/kenzok78/OpenWrt/workflows/autobuild/badge.svg
-[13]: https://github.com/kenzok78/OpenWrt/actions
+[12]: https://github.com/kenzok78/Bulid_Wrt/workflows/autobuild/badge.svg
+[13]: https://github.com/kenzok78/Bulid_Wrt/actions
 
 [![license][1]][2]
-[![GitHub Stars](https://img.shields.io/github/stars/kenzok78/OpenWrt.svg?style=flat-square&label=Stars)](https://github.com/kenzok78/OpenWrt/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/kenzok78/OpenWrt.svg?style=flat-square&label=Forks)](https://github.com/kenzok78/OpenWrt)
+[![GitHub Stars](https://img.shields.io/github/stars/kenzok78/Bulid_Wrt.svg?style=flat-square&label=Stars)](https://github.com/kenzok78/Bulid_Wrt/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/kenzok78/Bulid_Wrt.svg?style=flat-square&label=Forks)](https://github.com/kenzok78/Bulid_Wrt)
 [![PRs Welcome][3]][4]
 [![Issue Welcome][5]][6]
 [![AutoBuild][12]][13]
@@ -30,6 +30,7 @@
 ##### 固件下载:
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/Bulid_Wrt?style=for-the-badge&label=Download)](https://github.com/kenzok78/Bulid_Wrt/actions)
+
 ##### 特色:
 
 + 官网源码,内核升级到5.4. 最新源码同步.
@@ -86,13 +87,13 @@
  首次编译:
 ```
 screen -S openwrt
-wget -O compile.sh https://raw.githubusercontent.com/kenzok78/OpenWrt/master/onekey/compile.sh && bash compile.sh
+wget -O compile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/master/onekey/compile.sh && bash compile.sh
 ```
 
  二次编译:
 ```
 screen -S openwrt
-wget -O recompile.sh https://raw.githubusercontent.com/kenzok78/OpenWrt/master/onekey/recompile.sh && bash recompile.sh
+wget -O recompile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/master/onekey/recompile.sh && bash recompile.sh
 ```
 
 
