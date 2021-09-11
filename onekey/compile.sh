@@ -82,10 +82,9 @@ case $CHOOSE in
 esac
 done
 
-REPO_BRANCH="$(git ls-remote --tags git://github.com/openwrt/openwrt | cut -d/ -f3- | sort -t. -nk1,2 | awk '/^[^{]*$/{version=$1}END{print version}'| sed -e 's/v//')"
-
+REPO_BRANCH="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | jq -r '.[].name' | grep v21 | head -n 1 | sed -e 's/v//')"
 git clone -b v$REPO_BRANCH --depth 1 https://github.com/openwrt/openwrt
-svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
+svn export https://github.com/kenzok78/Bulid_Wrt.git/trunk/devices openwrt/devices
 
 cd openwrt
 if [[ $firmware == "x86_64" ]]; then
