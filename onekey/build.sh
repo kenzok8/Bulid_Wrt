@@ -57,7 +57,7 @@ echo "
 
 while :; do
 
-read -p "你想要编译哪个固件？ " CHOOSE
+read -p "你要编译哪个固件？ " CHOOSE
 
 case $CHOOSE in
 	1)
@@ -84,7 +84,7 @@ done
 
 REPO_BRANCH="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | jq -r '.[].name' | grep v21 | head -n 1 | sed -e 's/v//')"
 git clone -b v$REPO_BRANCH --depth 1 https://github.com/openwrt/openwrt
-svn export https://github.com/kenzok78/Bulid_Wrt.git/trunk/devices openwrt/devices
+svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
 
 cd openwrt
 if [[ $firmware == "x86_64" ]]; then
@@ -135,7 +135,7 @@ echo "                      *****5秒后开始编译*****
 
 1.你可以随时按Ctrl+C停止编译
 
-3.大陆用户编译前请准备好梯子,使用大陆白名单或全局模式"
+3.请使用大陆白名单或全局模式"
 echo
 echo
 echo

@@ -33,11 +33,24 @@ sed -i 's/max_requests 3/max_requests 20/g' package/network/services/uhttpd/file
 sed -i 's?admin/status/channel_analysis??' package/feeds/luci/luci-mod-status/root/usr/share/luci/menu.d/luci-mod-status.json
 sed -i "s/askfirst/respawn/g" `find package target -name inittab`
 sed -i 's/$(VERSION) &&/$(VERSION) ;/g' include/download.mk
-date=`date +%m.%d`
+date=`date +%m.%d.%Y`
 sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION=\"%D %C by kenzo'\"/g" package/base-files/files/etc/openwrt_release
 sed -i "s/CONFIG_VERSION_CODE=.*/CONFIG_VERSION_CODE=\"$date\"/g" devices/common/.config
 sed -i '$a cgi-timeout = 300' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
 sed -i 's/limit-as.*/limit-as = 5000/' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
+
+sed -i \
+	-e "s/+\(luci\|luci-ssl\|uhttpd\)\( \|$\)/\2/" \
+	-e "s/+nginx\( \|$\)/+nginx-ssl\1/" \
+	-e 's/+python\( \|$\)/+python3/' \
+	-e 's?../../lang?$(TOPDIR)/feeds/packages/lang?' \
+	package/feeds/custom/*/Makefile
+
+for ipk in $(ls -d package/feeds/custom/*); do
+	if [[ ! -d "$ipk/patches" ]]; then
+		sed -i "s/PKG_SOURCE_VERSION:=[0-9a-z]\{7,\}/PKG_SOURCE_VERSION:=HEAD/g" !(luci-app*)/Makefile
+	fi	
+done
 
 (
 if [ -f sdk.tar.xz ]; then
@@ -55,16 +68,3 @@ if [ -f sdk.tar.xz ]; then
 	ln -sf /usr/bin/python3 staging_dir/host/bin/python3
 fi
 ) &
-
-sed -i \
-	-e "s/+\(luci\|luci-ssl\|uhttpd\)\( \|$\)/\2/" \
-	-e "s/+nginx\( \|$\)/+nginx-ssl\1/" \
-	-e 's/+python\( \|$\)/+python3/' \
-	-e 's?../../lang?$(TOPDIR)/feeds/packages/lang?' \
-	package/feeds/custom/*/Makefile
-
-for ipk in $(ls -d package/feeds/custom/*); do
-	if [[ ! -d "$ipk/patches" ]]; then
-		sed -i "s/PKG_SOURCE_VERSION:=[0-9a-z]\{7,\}/PKG_SOURCE_VERSION:=HEAD/g" !(luci-app*)/Makefile
-	fi	
-done
