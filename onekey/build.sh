@@ -1,7 +1,7 @@
 #/bin/bash
 echo
 echo
-echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
+echo "本脚本仅适用于在Ubuntu环境下编�?https://github.com/kenzok78/Bulid_Wrt"
 echo
 echo
 sleep 2s
@@ -57,7 +57,7 @@ echo "
 
 while :; do
 
-read -p "你要编译哪个固件？ " CHOOSE
+read -p "你想要编译哪个固件？ " CHOOSE
 
 case $CHOOSE in
 	1)
@@ -98,7 +98,7 @@ fi
 
 read -p "请输入后台地址 [回车默认192.168.3.1]: " ip
 ip=${ip:-"192.168.3.1"}
-echo "您的后台地址为: $ip"
+echo "您的后台地址�? $ip"
 cp -rf devices/common/* ./
 cp -rf devices/$firmware/* ./
 if [ -f "devices/common/diy.sh" ]; then
@@ -131,11 +131,11 @@ make menuconfig
 echo
 echo
 echo
-echo "                      *****5秒后开始编译*****
+echo "                      *****5秒后开始编�?****
 
 1.你可以随时按Ctrl+C停止编译
 
-3.请使用大陆白名单或全局模式"
+3.大陆用户编译前请准备好梯�?使用大陆白名单或全局模式"
 echo
 echo
 echo
@@ -150,7 +150,7 @@ echo "
 编译完成~~~
 
 初始后台地址: $ip
-初始用户名密码: root  root
+初始用户名密�? root  root
 
 "
 fi
