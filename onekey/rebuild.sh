@@ -1,7 +1,7 @@
 #/bin/bash
 echo
 echo
-echo "本脚本仅适用于在Ubuntu环境下编�?https://github.com/kenzok78/Bulid_Wrt"
+echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
 echo
 echo
 
@@ -41,14 +41,14 @@ elif [ $firmware == "rpi-4" ]; then
 elif [ $firmware == "d-team_newifi-d2" ]; then
 	firmware="newifi-d2"
 else
-	echo "无法识别固件类型,请退�?
+	echo "无法识别固件类型,请退出"
 fi
 
 echo
 
 read -p "请输入后台地址 [回车默认192.168.3.1]: " ip
 ip=${ip:-"192.168.3.1"}
-echo "您的后台地址�? $ip"
+echo "您的后台地址为: $ip"
 
 rm -Rf feeds package/feeds common files diy tmp
 make clean
@@ -101,11 +101,11 @@ done
 }
 echo
 echo
-echo "                      *****5秒后开始编�?****
+echo "                      *****5秒后开始编译*****
 
 1.你可以随时按Ctrl+C停止编译
 
-3.大陆用户编译前请准备好梯�?使用大陆白名单或全局模式"
+3.请使用大陆白名单或全局模式"
 echo
 echo
 sleep 3s
@@ -120,7 +120,7 @@ echo "
 编译完成~~~
 
 初始后台地址: $ip
-初始用户名密�? root  root
+初始用户名密码: root  root
 
 "
 fi

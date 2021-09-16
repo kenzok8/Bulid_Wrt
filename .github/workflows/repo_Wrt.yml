@@ -13,7 +13,7 @@ on:
   #   branches:
   #     - master
   schedule:
-    - cron: 30 13 * * *
+    - cron: 15 13 * * *
   workflow_dispatch:
     inputs:
       skip:
@@ -32,7 +32,7 @@ jobs:
     - name: cancel running workflows
       uses: styfle/cancel-workflow-action@main
       with:
-        workflow_id: 12861031
+        workflow_id: Bulid_Wrt.yml,repo_Wrt.yml
         access_token: ${{ github.token }}
 
     - name: Checkout
@@ -90,6 +90,4 @@ jobs:
               -d '{"event_type": "nanopi-r4s ${{ env.SSH }}", "client_payload": {"target": "nanopi-r4s"}}'
             fi
         fi
-
-
 
