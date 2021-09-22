@@ -96,8 +96,8 @@ elif [[ $firmware == "Rpi-4B" ]]; then
 fi
 
 
-read -p "请输入后台地址 [回车默认10.0.0.1]: " ip
-ip=${ip:-"10.0.0.1"}
+read -p "请输入后台地址 [回车默认192.168.3.1]: " ip
+ip=${ip:-"192.168.3.1"}
 echo "您的后台地址为: $ip"
 cp -rf devices/common/* ./
 cp -rf devices/$firmware/* ./
@@ -111,11 +111,11 @@ if [ -f "devices/$firmware/diy.sh" ]; then
 fi
 cp -Rf ./diy/* ./
 if [ -f "devices/common/default-settings" ]; then
-	sed -i "s/10.0.0.1/$ip/" devices/common/default-settings
+	sed -i "s/192.168.3.1/$ip/" devices/common/default-settings
 	cp -f devices/common/default-settings package/*/*/default-settings/files/uci.defaults
 fi
 if [ -f "devices/$firmware/default-settings" ]; then
-	sed -i "s/10.0.0.1/$ip/" devices/$firmware/default-settings
+	sed -i "s/192.168.3.1/$ip/" devices/$firmware/default-settings
 	cat devices/$firmware/default-settings >> package/*/*/default-settings/files/uci.defaults
 fi
 if [ -n "$(ls -A "devices/common/patches" 2>/dev/null)" ]; then
