@@ -25,8 +25,7 @@
 [![garypang13](https://img.shields.io/badge/autoBuild-garypang13-red.svg?style=flat&logo=appveyor)](https://github.com/garypang13/OpenWrt)
  [![Lienol](https://img.shields.io/badge/passwall-openwrt-blueviolet.svg?style=flat&logo=appveyor)](https://github.com/xiaorouji/openwrt-passwall) 
 [![immortalwrt](https://img.shields.io/badge/immortalwrt-openwrt-orange.svg?style=flat&logo=appveyor)](https://github.com/immortalwrt/immortalwrt) 
-[![Lean](https://img.shields.io/badge/package-Lean-blueviolet.svg?style=flat&logo=appveyor)](https://github.com/coolsnowwolf/lede) 
-
+[![Lean](https://img.shields.io/badge/package-Lean-success.svg?style=flat&logo=appveyor)](https://github.com/coolsnowwolf/lede)
 ##### 固件下载:
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/Bulid_Wrt?style=for-the-badge&label=Download)](https://github.com/kenzok78/Bulid_Wrt/actions)
