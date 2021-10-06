@@ -38,8 +38,11 @@ sed -i 's?admin/status/channel_analysis??' package/feeds/luci/luci-mod-status/ro
 sed -i "s/askfirst/respawn/g" `find package target -name inittab`
 date=`date +%m.%d`
 date1=`date +%h`
+sed -i 's/LuCI openwrt-21.02 branch/kenzo/g' /usr/lib/lua/luci/version.lua
+sed -i '/luciversion/d' /usr/lib/lua/luci/version.lua
+echo 'luciversion = "Otc"' >> /usr/lib/lua/luci/version.lua
 sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION=\"%D by kenzo'\"/g" package/base-files/files/etc/openwrt_release
-sed -i "s/CONFIG_VERSION_CODE=.*/CONFIG_VERSION_CODE=\"$date1\"/g" devices/common/.config
+sed -i "s/CONFIG_VERSION_CODE=.*/CONFIG_VERSION_CODE=\"$date\"/g" devices/common/.config
 sed -i '$a cgi-timeout = 300' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
 sed -i 's/limit-as.*/limit-as = 5000/' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
 
