@@ -52,14 +52,6 @@
 
 * 在仓库Settings->Secrets中添加 TELEGRAM_CHAT_ID, TELEGRAM_TOKEN 可推送编译结果到Telegram Bot
 
-##### 编译触发方式: 
-
-   + 方式1: Actions页面选择 Repo Dispatcher 点击 Run workflow
-   
-   + 方式2: 请在支持油猴的浏览器中安装 [脚本](https://greasyfork.org/scripts/407616-github-actions-trigger/code/Github%20Actions%20Trigger.user.js) ,仓库右上角会出现 x86_64 Actions,K2P Actions等按钮,点击对应按钮即可.
-   
-   + 更多玩法 [repo-dispatcher](https://github.com/tete1030/github-repo-dispatcher)
-
 [另外仓库| 四个主流代码x86固件编译](https://github.com/kenzok78/Build-OpenWrt)
 
 ##### 默认插件包含:
