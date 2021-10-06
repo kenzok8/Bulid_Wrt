@@ -60,7 +60,7 @@
    
    + 更多玩法 [repo-dispatcher](https://github.com/tete1030/github-repo-dispatcher)
 
-[p3terx | 云编译教程](https://p3terx.com/archives/OpenWrt-with-github-actions.html)
+[另外仓库| 四个主流代码x86固件编译](https://p3terx.com/archives/OpenWrt-with-github-actions.html)
 
 ##### 默认插件包含:
 
