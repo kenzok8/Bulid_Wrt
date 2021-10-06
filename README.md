@@ -95,6 +95,3 @@ screen -S openwrt
 wget -O recompile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/master/onekey/recompile.sh && bash recompile.sh
 ```
 
-
-
-
