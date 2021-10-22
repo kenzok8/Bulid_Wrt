@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: Build OpenWrt
+name: Build Wrt
 
 on: 
   repository_dispatch:
@@ -141,10 +141,10 @@ jobs:
           /bin/bash "devices/${{matrix.target}}/$DIY_SH"
         fi
         cp -Rf ./diy/* ./
-        cp -f devices/common/default-settings package/*/*/default-settings/files/uci.defaults
+        cp -f devices/common/default-settings package/*/*/my-default-settings/files/uci.defaults
         if [ -f "devices/${{matrix.target}}/default-settings" ]; then
-          echo >> package/*/*/default-settings/files/uci.defaults
-          cat devices/${{matrix.target}}/default-settings >> package/*/*/default-settings/files/uci.defaults
+          echo >> package/*/*/my-default-settings/files/uci.defaults
+          cat devices/${{matrix.target}}/default-settings >> package/*/*/my-default-settings/files/uci.defaults
         fi
         cp -f devices/common/$CONFIG_FILE .config
         if [ -f "devices/${{matrix.target}}/$CONFIG_FILE" ]; then
@@ -163,9 +163,9 @@ jobs:
     - name: Default PPPOE Setting
       if: env.PPPOE_USERNAME && env.PPPOE_PASSWD
       run: |
-        sed -i '$i uci set network.wan.username=${{ env.PPPOE_USERNAME }}' openwrt/package/*/*/default-settings/files/uci.defaults
-        sed -i '$i uci set network.wan.password=${{ env.PPPOE_PASSWD }}' openwrt/package/*/*/default-settings/files/uci.defaults
-        sed -i '$i uci commit network' openwrt/package/*/*/default-settings/files/uci.defaults
+        sed -i '$i uci set network.wan.username=${{ env.PPPOE_USERNAME }}' openwrt/package/*/*/my-default-settings/files/uci.defaults
+        sed -i '$i uci set network.wan.password=${{ env.PPPOE_PASSWD }}' openwrt/package/*/*/my-default-settings/files/uci.defaults
+        sed -i '$i uci commit network' openwrt/package/*/*/my-default-settings/files/uci.defaults
               
     - name: SSH connection to Actions
       uses: kenzok78/debugger-action@master
@@ -180,6 +180,7 @@ jobs:
 
     - name: Cache
       uses: klever1988/cachewrtbuild@main
+      if: contains(github.event.action, 'nocache') == false
       with:
         ccache: 'true'
         prefix: ${{ github.workspace }}/openwrt
@@ -217,7 +218,7 @@ jobs:
         echo $md5 >> version.txt
         echo $REPO_BRANCH >> version.txt
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
-        Emoji=("🤞" "✨" "🎈" "🎄" "🎨" "💋" "🍓" "🐤")
+        Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
         echo "EMOJI=${Emoji[$[$RANDOM % ${#Emoji[@]}]]}" >> $GITHUB_ENV
         if [ ${{matrix.target}} == "x86_64" ]; then
         echo "DOCKERTAG=${{ secrets.DOCKER_ID }}/openwrt-nginx:latest" >> $GITHUB_ENV
@@ -262,6 +263,7 @@ jobs:
         [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🎈)\n" >> release.txt
         [ ${{ env.NOTICE }} ] && echo -e "${{ env.NOTICE }}" >> release.txt || true
 
+
     - name: Upload firmware for release
       uses: softprops/action-gh-release@master
       continue-on-error: true
@@ -273,18 +275,42 @@ jobs:
         name: ${{ env.date2 }} ${{matrix.target}} ${{ env.EMOJI }}
         tag_name: ${{ env.date }}_${{matrix.target}}
         body_path: release.txt
+      
+    - name: Set Up Docker Buildx
+      uses: docker/setup-buildx-action@master
+      if: env.DOCKER_ID && env.DOCKER_PASSWD
+
+    - name: Login To DockerHub
+      uses: docker/login-action@master
+      if: env.DOCKER_ID && env.DOCKER_PASSWD
+      with:
+        username: ${{ secrets.DOCKER_ID }}
+        password: ${{ secrets.DOCKER_PASSWD }}
+        
+    - name: Build and push docker image
+      uses: docker/build-push-action@master
+      continue-on-error: true
+      if: env.DOCKER_ID && env.DOCKER_PASSWD && ! contains(github.event.action, 'noser')
+      with:
+        platforms: ${{ env.ARCH }}
+        file: Dockerfile
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_ID }}/openwrt-nginx:${{ matrix.target }}
+          ${{ env.DOCKERTAG }}
     
     - name: WeChat notification
       continue-on-error: true
       if: env.SCKEY
       run: |
-        # [ steps.compile.outputs.status == 'success' ] && curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=🎈OpenWrt_${{ env.VERSION }}_${{matrix.target}}编译完成🎈|| curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=🎈OpenWrt_${{ env.VERSION }}_${{matrix.target}}编译失败😂
+        # [ steps.compile.outputs.status == 'success' ] && curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=🎉OpenWrt_${{ env.VERSION }}_${{matrix.target}}编译完成😋|| curl https://sctapi.ftqq.com/${{ secrets.SCKEY }}.send?text=❌OpenWrt_${{ env.VERSION }}_${{matrix.target}}编译失败😂
 
     - name: Telegram notification
       if: env.TELEGRAM_TOKEN && ! contains(github.event.action, 'notg')
       continue-on-error: true
       run: |
-        [ steps.compile.outputs.status == 'success' ] && curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=🎈OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功🎈 ${{ env.WETRANS }} 🎈" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" || curl -k --data chat_id="${{ secrets.TELEGRAM_TO }}" --data "text=🎈OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage"
+        [ steps.compile.outputs.status == 'success' ] && curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://op.supes.top/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" || curl -k --data chat_id="${{ secrets.TELEGRAM_TO }}" --data "text=❌ OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage"
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main

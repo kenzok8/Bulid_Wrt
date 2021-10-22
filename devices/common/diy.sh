@@ -12,8 +12,8 @@ svn export --force https://github.com/immortalwrt/immortalwrt/branches/openwrt-2
 svn export --force https://github.com/coolsnowwolf/lede/trunk/tools/upx tools/upx
 svn export --force https://github.com/coolsnowwolf/lede/trunk/tools/ucl tools/ucl
 svn co https://github.com/immortalwrt/immortalwrt/branches/openwrt-21.02/target/linux/generic/hack-5.4 target/linux/generic/hack-5.4
-curl -L https://git.io/J0klM --create-dirs -o package/network/config/firewall/patches/fullconenat.patch
-curl -L https://raw.githubusercontent.com/coolsnowwolf/lede/master/target/linux/generic/hack-5.4/601-netfilter-export-udp_get_timeouts-function.patch -o target/linux/generic/hack-5.4/601-netfilter-export-udp_get_timeouts-function.patch
+curl -sfL https://git.io/J0klM --create-dirs -o package/network/config/firewall/patches/fullconenat.patch
+curl -sfL https://raw.githubusercontent.com/coolsnowwolf/lede/master/target/linux/generic/hack-5.4/601-netfilter-export-udp_get_timeouts-function.patch -o target/linux/generic/hack-5.4/601-netfilter-export-udp_get_timeouts-function.patch
 ) &
 sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' tools/Makefile
 sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/custom/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
@@ -37,11 +37,7 @@ sed -i 's/max_requests 3/max_requests 20/g' package/network/services/uhttpd/file
 sed -i 's?admin/status/channel_analysis??' package/feeds/luci/luci-mod-status/root/usr/share/luci/menu.d/luci-mod-status.json
 sed -i "s/askfirst/respawn/g" `find package target -name inittab`
 date=`date +%m.%d`
-date1=`date +%h`
-sed -i 's/LuCI openwrt-21.02 branch/kenzo/g' /usr/lib/lua/luci/version.lua
-sed -i '/luciversion/d' /usr/lib/lua/luci/version.lua
-echo 'luciversion = "Otc"' >> /usr/lib/lua/luci/version.lua
-sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION=\"%D by kenzo'\"/g" package/base-files/files/etc/openwrt_release
+sed -i "s/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION=\"%D %C by kenzo'\"/g" package/base-files/files/etc/openwrt_release
 sed -i "s/CONFIG_VERSION_CODE=.*/CONFIG_VERSION_CODE=\"$date\"/g" devices/common/.config
 sed -i '$a cgi-timeout = 300' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
 sed -i 's/limit-as.*/limit-as = 5000/' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini

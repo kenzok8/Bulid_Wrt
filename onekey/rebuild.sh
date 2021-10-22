@@ -19,7 +19,7 @@ echo
 clear
 
 rm -Rf openwrt/common openwrt/files openwrt/devices
-svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
+svn export https://github.com/kiddin9/OpenWrt_x86-r2s-r4s/trunk/devices openwrt/devices
 cd openwrt
 
 git checkout .
@@ -46,8 +46,8 @@ fi
 
 echo
 
-read -p "请输入后台地址 [回车默认192.168.3.1]: " ip
-ip=${ip:-"192.168.3.1"}
+read -p "请输入后台地址 [回车默认10.0.0.1]: " ip
+ip=${ip:-"10.0.0.1"}
 echo "您的后台地址为: $ip"
 
 rm -Rf feeds package/feeds common files diy tmp
@@ -65,12 +65,12 @@ if [ -f "devices/$firmware/diy.sh" ]; then
 fi
 cp -Rf ./diy/* ./
 if [ -f "devices/common/default-settings" ]; then
-	sed -i 's/192.168.3.1/$ip/' devices/common/default-settings
-	cp -f devices/common/default-settings package/*/*/default-settings/files/uci.defaults
+	sed -i 's/10.0.0.1/$ip/' devices/common/default-settings
+	cp -f devices/common/default-settings package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -f "devices/$firmware/default-settings" ]; then
-	sed -i 's/192.168.3.1/$ip/' devices/$firmware/default-settings
-	cat devices/$firmware/default-settings >> package/*/*/default-settings/files/uci.defaults
+	sed -i 's/10.0.0.1/$ip/' devices/$firmware/default-settings
+	cat devices/$firmware/default-settings >> package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -n "$(ls -A "devices/common/patches" 2>/dev/null)" ]; then
           find "devices/common/patches" -type f -name '*.patch' ! -name '*.revert.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 --forward"
