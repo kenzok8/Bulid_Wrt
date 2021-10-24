@@ -43,7 +43,7 @@ jobs:
       uses: styfle/cancel-workflow-action@main
       if: contains(github.event.action, 'cw')
       with:
-        workflow_id: 12861031
+        workflow_id: 12861030
         access_token: ${{ github.token }}
 
     - name: Load Settings.ini
@@ -224,6 +224,17 @@ jobs:
         echo "DOCKERTAG=${{ secrets.DOCKER_ID }}/openwrt-nginx:latest" >> $GITHUB_ENV
         echo "NOTICE=请分配不少于1G的存储容量" >> $GITHUB_ENV
         fi
+
+    - name: Deploy files to server
+      uses: easingthemes/ssh-deploy@main
+      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        ARGS: "-avzr --exclude="
+        SOURCE: firmware/
+        REMOTE_HOST: op.supes.top
+        REMOTE_USER: root
+        TARGET: "/www/wwwroot/op.supes.top/firmware/${{matrix.target}}/"        
 
     - name: Upload firmware for artifact
       uses: actions/upload-artifact@main
