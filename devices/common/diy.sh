@@ -2,6 +2,9 @@
 #=================================================
 shopt -s extglob
 sed -i '/	refresh_config();/d' scripts/feeds
+[ ! -f feeds.conf ] && {
+sed -i '$a src-git custom https://github.com/kenzok8/jell.git;main' feeds.conf.default
+}
 ./scripts/feeds update -a
 ./scripts/feeds install -a -p custom
 ./scripts/feeds install -a
@@ -19,6 +22,7 @@ sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' 
 sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/custom/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
 sed -i 's/Os/O2/g' include/target.mk
 sed -i 's/$(TARGET_DIR)) install/$(TARGET_DIR)) install --force-overwrite/' package/Makefile
+sed -i "/mediaurlbase/d" package/feeds/*/luci-theme*/root/etc/uci-defaults/*
 sed -i 's/root:.*/root:$1$tTPCBw1t$ldzfp37h5lSpO9VXk4uUE\/:18336:0:99999:7:::/g' package/base-files/files/etc/shadow
 sed -i -e '$a /etc/sysupgrade.conf' \
        -e '/etc/sysupgrade.conf' \
