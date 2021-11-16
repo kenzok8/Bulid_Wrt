@@ -3,7 +3,7 @@
 shopt -s extglob
 sed -i '/	refresh_config();/d' scripts/feeds
 [ ! -f feeds.conf ] && {
-sed -i '$a src-git custom https://github.com/kenzok8/jell.git;main' feeds.conf.default
+sed -i '$a src-git custom https://github.com/kiddin9/openwrt-packages.git;master' feeds.conf.default
 }
 ./scripts/feeds update -a
 ./scripts/feeds install -a -p custom
@@ -25,7 +25,6 @@ sed -i 's/$(TARGET_DIR)) install/$(TARGET_DIR)) install --force-overwrite/' pack
 sed -i "/mediaurlbase/d" package/feeds/*/luci-theme*/root/etc/uci-defaults/*
 sed -i '/root:/c\root:$1$tTPCBw1t$ldzfp37h5lSpO9VXk4uUE\/:18336:0:99999:7:::' package/base-files/files/etc/shadow
 sed -i -e '$a /etc/sysupgrade.conf' \
-       -e '/etc/sysupgrade.conf' \
        -e '$a /etc/bench.log' \
        -e '/\/etc\/profile/d' \
        -e '/\/etc\/shinit/d' \
@@ -42,7 +41,7 @@ sed -i 's?admin/status/channel_analysis??' package/feeds/luci/luci-mod-status/ro
 sed -i "s/askfirst/respawn/g" `find package target -name inittab`
 date=`date +%m.%d`
 sed -i "/DISTRIB_DESCRIPTION/c\DISTRIB_DESCRIPTION=\"%D %C by kenzo'\"" package/base-files/files/etc/openwrt_release
-sed -i "/CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"\$date\"" devices/common/.config
+sed -i "/CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$date\"" devices/common/.config
 sed -i '$a cgi-timeout = 300' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
 sed -i '/limit-as/c\limit-as = 5000' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
 
