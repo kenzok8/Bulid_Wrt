@@ -84,7 +84,7 @@ test $version -lt 1 && {
 	uci -q set fstab.@global[0].anon_mount=1
 	uci commit fstab
  
-	uci -q set network.lan.ipaddr="10.0.0.1"
+	uci -q set network.lan.ipaddr="192.168.1.252"
 	uci -q set network.@globals[0].packet_steering=1
 	uci commit network
   
