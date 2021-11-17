@@ -233,6 +233,7 @@ jobs:
         ARGS: "-avzr --exclude="
         SOURCE: firmware/
         REMOTE_HOST: op.dllkids.xyz
+        REMOTE_PORT: 2222
         REMOTE_USER: root
         TARGET: "/www/wwwroot/op.dllkids.xyz/firmware/${{matrix.target}}/"        
 
