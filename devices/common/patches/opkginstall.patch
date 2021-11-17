@@ -159,7 +159,7 @@
 +					$opkg $action luci-i18n-"$(echo $@ | cut -d - -f 3-4)"-zh-cn </dev/null >>/tmp/opkg.out 2>/dev/null
 +				fi
 +				case "$action" in
-+					install)
++					install|upgrade)
 +						[ "$(opkg list-installed | cut -f 1 -d ' ' | grep -w $@)" ] && {
 +							rm -f /tmp/opkg.err
 +						}
@@ -233,4 +233,27 @@
 +
  	return $ret
  }
+ 
+
+--- a/package/base-files/files/sbin/sysupgrade
++++ b/package/base-files/files/sbin/sysupgrade
+@@ -232,6 +232,7 @@ do_save_conffiles() {
+ 
+ 	if [ "$SAVE_INSTALLED_PKGS" -eq 1 ]; then
+ 		echo "${INSTALLED_PACKAGES}" >> "$CONFFILES"
++		echo "${ETCBACKUP_DIR}/user_installed.opkg" >> "$CONFFILES"
+ 		mkdir -p "$ETCBACKUP_DIR"
+ 		# Avoid touching filesystem on each backup
+ 		RAMFS="$(mktemp -d -t sysupgrade.XXXXXX)"
+
+--- a/package/feeds/luci/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
++++ b/package/feeds/luci/luci-mod-system/htdocs/luci-static/resources/view/system/flash.js
+@@ -261,6 +261,7 @@ return view.extend({
+ 					body.push(E('p', {}, E('label', { 'class': 'btn' }, [
+ 						opts.backup_pkgs[0], ' ', _('Include in backup a list of current installed packages at /etc/backup/installed_packages.txt')
+ 					])));
++					opts.backup_pkgs[0].checked = true;
+ 				};
+ 
+ 				var cntbtn = E('button', {
  
