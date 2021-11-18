@@ -36,15 +36,15 @@
 
 + 原生纯净,包含ipv6,主流开源插件.
 
-+ 针对国内特殊网络环境自定义优化.
++ 针对国内特殊网络环境,自定义优化.
 
-+ 清爽主题argon，ngix可玩性高
++ 清爽主题argon,nginx可玩性扩展.
 
 + 无需专业知识,云编译定制编译固件.
 
-+ 持续更新, 定时自动云编译更新固件
++ 持续更新,定时自动云编译更新固件.
 
-##### 关于Secrets、TOKEN的小知识
+##### 关于Secrets,TOKEN的小知识
 
 * 云编译需要 [在此](https://github.com/settings/tokens) 创建个token,然后在此仓库Settings->Secrets中添加个名字为REPO_TOKEN的Secret,填入token值
 
@@ -64,7 +64,7 @@
 + UPNP 自动端口转发
 + Turbo ACC 网络加速
 
-##### 默认后台地址 192.168.1.252, 密码 root
+##### 默认后台地址 192.168.1.252,密码 root
 
 ##### 注意：
 
