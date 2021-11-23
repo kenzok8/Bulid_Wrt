@@ -77,12 +77,12 @@
  首次编译:
 ```
 screen -S openwrt
-wget -O compile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/master/onekey/compile.sh && bash compile.sh
+wget -O compile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/main/onekey/compile.sh && bash compile.sh
 ```
 
  二次编译:
 ```
 screen -S openwrt
-wget -O recompile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/master/onekey/recompile.sh && bash recompile.sh
+wget -O recompile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/main/onekey/recompile.sh && bash recompile.sh
 ```
 
