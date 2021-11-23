@@ -237,7 +237,7 @@ jobs:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
         REMOTE_USER: root
-        TARGET: "/www/wwwroot/op.dllkids.xyz/firmware/${{matrix.target}}/"        
+        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/"        
 
     - name: Upload firmware for artifact
       uses: actions/upload-artifact@main
