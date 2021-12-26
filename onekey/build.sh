@@ -8,7 +8,7 @@ sleep 2s
 sudo apt-get update
 sudo apt-get upgrade
 
-sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler ccache xsltproc rename antlr3 gperf curl screen upx jq
+sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc-s1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils libelf-dev autoconf automake libtool autopoint device-tree-compiler ccache xsltproc rename antlr3 gperf curl screen upx-ucl jq
 
 
 
@@ -88,16 +88,16 @@ svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
 
 cd openwrt
 if [[ $firmware == "x86_64" ]]; then
-		wget -cO sdk.tar.xz https://mirrors.cloud.tencent.com/openwrt/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-$REPO_BRANCH-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
-elif [[ $firmware =~ (nanopi-r2s|nanopi-r4s) ]]; then
-		wget -cO sdk.tar.xz https://mirrors.cloud.tencent.com/openwrt/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-$REPO_BRANCH-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+	curl -fL -o sdk.tar.xz https://mirrors.cloud.tencent.com/openwrt/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-$REPO_BRANCH-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/x86/64/openwrt-sdk-21.02-SNAPSHOT-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+elif [[ $firmware == nanopi-* ]]; then
+	curl -fL -o sdk.tar.xz https://mirrors.cloud.tencent.com/openwrt/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-$REPO_BRANCH-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/rockchip/armv8/openwrt-sdk-21.02-SNAPSHOT-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz
 elif [[ $firmware == "Rpi-4B" ]]; then
-		wget -cO sdk.tar.xz https://mirrors.cloud.tencent.com/openwrt/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-$REPO_BRANCH-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+	curl -fL -o sdk.tar.xz https://mirrors.cloud.tencent.com/openwrt/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-$REPO_BRANCH-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/bcm27xx/bcm2711/openwrt-sdk-21.02-SNAPSHOT-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz
 fi
 
 
-read -p "请输入后台地址 [回车默认192.168.1.252]: " ip
-ip=${ip:-"192.168.1.252"}
+read -p "请输入后台地址 [回车默认192.168.1.251]: " ip
+ip=${ip:-"192.168.1.251"}
 echo "您的后台地址为: $ip"
 cp -rf devices/common/* ./
 cp -rf devices/$firmware/* ./
@@ -111,11 +111,11 @@ if [ -f "devices/$firmware/diy.sh" ]; then
 fi
 cp -Rf ./diy/* ./
 if [ -f "devices/common/default-settings" ]; then
-	sed -i "s/192.168.1.252/$ip/" devices/common/default-settings
+	sed -i "s/192.168.1.251/$ip/" devices/common/default-settings
 	cp -f devices/common/default-settings package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -f "devices/$firmware/default-settings" ]; then
-	sed -i "s/192.168.1.252/$ip/" devices/$firmware/default-settings
+	sed -i "s/192.168.1.251/$ip/" devices/$firmware/default-settings
 	cat devices/$firmware/default-settings >> package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -n "$(ls -A "devices/common/patches" 2>/dev/null)" ]; then
@@ -135,7 +135,7 @@ echo "                      *****5秒后开始编译*****
 
 1.你可以随时按Ctrl+C停止编译
 
-3.请使用大陆白名单或全局模式"
+3.大陆用户编译前请准备好梯子,使用大陆白名单或全局模式"
 echo
 echo
 echo

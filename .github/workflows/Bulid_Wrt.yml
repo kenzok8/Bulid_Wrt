@@ -66,8 +66,14 @@ jobs:
         echo "UPLOAD_FIRMWARE_TO_WETRANSFER=${UPLOAD_FIRMWARE_TO_WETRANSFER}" >> $GITHUB_ENV
         if [ ${{matrix.target}} == "x86_64" ]; then
             echo "ARCH=linux/amd64" >> $GITHUB_ENV
+            echo "MTARGET=x86_64" >> $GITHUB_ENV
         elif [[ ${{matrix.target}} =~ (Rpi-4B|nanopi-r2s|nanopi-r4s) ]]; then
             echo "ARCH=linux/arm64" >> $GITHUB_ENV
+        fi
+        if [ ${{matrix.target}} == "Rpi-4B" ]; then
+            echo "MTARGET=aarch64_cortex-a72" >> $GITHUB_ENV
+        elif [ ${{matrix.target}} == "nanopi-r2s" ]; then
+            echo "MTARGET=aarch64_generic" >> $GITHUB_ENV
         fi
 
     - name: Trigger Packages Update
@@ -97,7 +103,7 @@ jobs:
     - name: Get current date
       id: date
       run: |
-        echo "date=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_ENV
+        echo "date=$(date +'%m/%d_%Y_%H/%M')" >> $GITHUB_ENV
         echo "date2=$(date +'%m/%d %Y')" >> $GITHUB_ENV
         VERSION="$(echo "${{github.event.action}}" | grep -Eo " [0-9.]+" | sed -e 's/ //')" || true
         [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV
@@ -111,13 +117,13 @@ jobs:
         git clone --depth 1 $REPO_URL -b v$REPO_BRANCH openwrt
         cd openwrt
         if [[ ${{matrix.target}} == "x86_64" ]]; then
-            curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-$REPO_BRANCH-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/x86/64/openwrt-sdk-21.02-SNAPSHOT-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+            curl -fL -m 60 -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-$REPO_BRANCH-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -m 60 -o sdk.tar.xz https://openwrt.tetaneutral.net/releases/21.02-SNAPSHOT/targets/x86/64/openwrt-sdk-21.02-SNAPSHOT-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         elif [[ ${{matrix.target}} == nanopi* ]]; then
-            curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-$REPO_BRANCH-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/rockchip/armv8/openwrt-sdk-21.02-SNAPSHOT-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+            curl -fL -m 60 -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-$REPO_BRANCH-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -m 60 -o sdk.tar.xz https://openwrt.tetaneutral.net/releases/21.02-SNAPSHOT/targets/rockchip/armv8/openwrt-sdk-21.02-SNAPSHOT-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         elif [[ ${{matrix.target}} =~ "Rpi-4B" ]]; then
-            curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-$REPO_BRANCH-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -o sdk.tar.xz https://downloads.openwrt.org/releases/21.02-SNAPSHOT/targets/bcm27xx/bcm2711/openwrt-sdk-21.02-SNAPSHOT-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+            curl -fL -m 60 -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-$REPO_BRANCH-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -m 60 -o sdk.tar.xz https://openwrt.tetaneutral.net/releases/21.02-SNAPSHOT/targets/bcm27xx/bcm2711/openwrt-sdk-21.02-SNAPSHOT-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         fi
-        echo "REPO_BRANCH=v$REPO_BRANCH" >> $GITHUB_ENV
+        echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
         
     - name: Free up disk space
       if: env.FREE_UP_DISK == 'true'
@@ -129,7 +135,6 @@ jobs:
         ln -sf /mnt/openwrt/staging_dir openwrt/staging_dir
         ln -sf /mnt/openwrt/build_dir/hostpkg openwrt/build_dir/hostpkg
         
-
     - name: Load custom configuration
       run: |
         cp -rf devices/common/. openwrt/
@@ -212,13 +217,14 @@ jobs:
         mv -f openwrt/bin/targets/*/*/{*combined*,*sysupgrade*} ./firmware/ 2>/dev/null || true
         cp openwrt/.config  ./firmware/${{matrix.target}}.config
         cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}_kernel.config
+        mv -f openwrt/bin/targets/*/*/packages ./kmods
         cd firmware
         echo "${{ env.VERSION }}.$(date +'%Y')" > version.txt
         rename -v "s/^openwrt/${{ env.VERSION }}-openwrt/" * || true
         rename -v "s/friendlyarm_//" *gz || true
         md5=$((md5sum *squashfs-sysupgrade* || md5sum *squashfs-combined-efi*) | awk '{print $1}') 2>/dev/null
         echo $md5 >> version.txt
-        echo $REPO_BRANCH >> version.txt
+        echo v$REPO_BRANCH >> version.txt
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
         echo "EMOJI=${Emoji[$[$RANDOM % ${#Emoji[@]}]]}" >> $GITHUB_ENV
@@ -227,7 +233,7 @@ jobs:
         echo "NOTICE=请分配不少于1G的存储容量" >> $GITHUB_ENV
         fi
 
-    - name: Deploy files to server
+    - name: Deploy firmware to server
       uses: easingthemes/ssh-deploy@main
       if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
       with:
@@ -237,7 +243,27 @@ jobs:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
         REMOTE_USER: root
-        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/"        
+        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/"  
+
+    - name: remote ssh command
+      uses: appleboy/ssh-action@master
+      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser') && env.MTARGET
+      with:
+        host: ${{ secrets.REMOTE_HOST }}
+        username: root
+        key: ${{ env.SSH_PRIVATE_KEY }}
+        script: mkdir -p /www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/kmods/${{ env.REPO_BRANCH }}
+
+    - name: Deploy kmods to server
+      uses: easingthemes/ssh-deploy@main
+      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser') && env.MTARGET
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        ARGS: "-avzr --delete"
+        SOURCE: kmods/
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: root
+        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/kmods/${{ env.REPO_BRANCH }}/"
 
     - name: Upload firmware for artifact
       uses: actions/upload-artifact@main
@@ -273,10 +299,10 @@ jobs:
       continue-on-error: true
       run: |
         echo -e "墙内外加速下载 🎈:\n" >> release.txt
+        echo -e "[腾讯云] (https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/ 🎈)\n" >> release.txt
         [ ${{ env.WETRANS }} ] && echo -e "[WeTransfer] (${{ env.WETRANS }} 🎈)\n" >> release.txt
         [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🎈)\n" >> release.txt
         [ ${{ env.NOTICE }} ] && echo -e "${{ env.NOTICE }}" >> release.txt || true
-
 
     - name: Upload firmware for release
       uses: softprops/action-gh-release@master
@@ -324,7 +350,7 @@ jobs:
       if: env.TELEGRAM_TOKEN && ! contains(github.event.action, 'notg')
       continue-on-error: true
       run: |
-        [ steps.compile.outputs.status == 'success' ] && curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://op.dllkids.xyz/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" || curl -k --data chat_id="${{ secrets.TELEGRAM_TO }}" --data "text=❌ OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage"
+        [ steps.compile.outputs.status == 'success' ] && curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" || curl -k --data chat_id="${{ secrets.TELEGRAM_TO }}" --data "text=❌ OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage"
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main

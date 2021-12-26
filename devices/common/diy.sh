@@ -6,9 +6,9 @@ sed -i '/	refresh_config();/d' scripts/feeds
 sed -i '$a src-git custom https://github.com/kenzok8/jell.git;main' feeds.conf.default
 }
 ./scripts/feeds update -a
-./scripts/feeds install -a -p custom
+./scripts/feeds install -a -p kiddin9
 ./scripts/feeds install -a
-cd feeds/custom; git pull; cd -
+cd feeds/kiddin9; git pull; cd -
 (
 svn export --force https://github.com/immortalwrt/immortalwrt/branches/openwrt-21.02/package/network/services/ppp package/network/services/ppp
 svn export --force https://github.com/immortalwrt/immortalwrt/branches/openwrt-21.02/package/network/services/dnsmasq package/network/services/dnsmasq
@@ -18,8 +18,9 @@ svn co https://github.com/immortalwrt/immortalwrt/branches/openwrt-21.02/target/
 curl -sfL https://git.io/J0klM --create-dirs -o package/network/config/firewall/patches/fullconenat.patch
 curl -sfL https://raw.githubusercontent.com/coolsnowwolf/lede/master/target/linux/generic/hack-5.4/601-netfilter-export-udp_get_timeouts-function.patch -o target/linux/generic/hack-5.4/601-netfilter-export-udp_get_timeouts-function.patch
 ) &
+
 sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' tools/Makefile
-sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/custom/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
+sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/kiddin9/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
 sed -i 's/Os/O2/g' include/target.mk
 sed -i 's/$(TARGET_DIR)) install/$(TARGET_DIR)) install --force-overwrite/' package/Makefile
 sed -i "/mediaurlbase/d" package/feeds/*/luci-theme*/root/etc/uci-defaults/*
@@ -39,22 +40,23 @@ sed -i 's/max_requests 3/max_requests 20/g' package/network/services/uhttpd/file
 #rm -rf ./feeds/packages/lang/{golang,node}
 sed -i 's?admin/status/channel_analysis??' package/feeds/luci/luci-mod-status/root/usr/share/luci/menu.d/luci-mod-status.json
 sed -i "s/askfirst/respawn/g" `find package target -name inittab`
-date=`date +%m.%d`
+date=`date +%m.%d.%Y`
 sed -i "/DISTRIB_DESCRIPTION/c\DISTRIB_DESCRIPTION=\"%D %C by kenzo'\"" package/base-files/files/etc/openwrt_release
 sed -i "/CONFIG_VERSION_CODE=/c\CONFIG_VERSION_CODE=\"$date\"" devices/common/.config
 sed -i '$a cgi-timeout = 300' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
 sed -i '/limit-as/c\limit-as = 5000' package/feeds/packages/uwsgi/files-luci-support/luci-webui.ini
+sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-defaults.mk
 
 sed -i \
 	-e "s/+\(luci\|luci-ssl\|uhttpd\)\( \|$\)/\2/" \
 	-e "s/+nginx\( \|$\)/+nginx-ssl\1/" \
 	-e 's/+python\( \|$\)/+python3/' \
 	-e 's?../../lang?$(TOPDIR)/feeds/packages/lang?' \
-	package/feeds/custom/*/Makefile
+	package/feeds/kiddin9/*/Makefile
 
 (
 if [ -f sdk.tar.xz ]; then
-	sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/custom/*/Makefile
+	sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kiddin9/*/Makefile
 	mkdir sdk
 	tar -xJf sdk.tar.xz -C sdk
 	cp -rf sdk/*/staging_dir/* ./staging_dir/

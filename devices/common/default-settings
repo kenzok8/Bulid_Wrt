@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 [[ "$(df | grep overlay)" && ! "$(df | grep /rom/overlay)" ]] && firstboot
@@ -19,8 +18,12 @@ uci commit dockerd
 
 sed -i '/profile.d/d' /lib/upgrade/keep.d/base-files
 
-sed -i 's/\(custom.*\)\/custom/\1/' /etc/opkg/distfeeds.conf
+sed -i '/openwrt_kiddin9/d' /etc/opkg/distfeeds.conf
 sed -i 's?\(src/gz openwrt_\(core\|telephony\)\)?#\1?' /etc/opkg/distfeeds.conf
+VERSION="$(cat /etc/os-release | grep "VERSION=" | cut -d \" -f 2)"
+ARCH="$(cat /etc/os-release | grep "OPENWRT_ARCH=" | cut -d \" -f 2)"
+sed -i "\$a src/gz openwrt_kmods https://op.supes.top/packages/$ARCH/kmods/$VERSION" /etc/opkg/distfeeds.conf
+sed -i "\$a src/gz openwrt_kiddin9 https://op.supes.top/packages/$ARCH" /etc/opkg/distfeeds.conf
 
 echo $(uci -q get uhttpd.main.index_page) | grep -q "cgi-bin/luci" ||
 	uci -q add_list uhttpd.main.index_page='cgi-bin/luci' && uci commit uhttpd
@@ -124,7 +127,7 @@ test $version -lt 1 && {
 	uci -q set fstab.@global[0].anon_mount=1
 	uci commit fstab
  
-	uci -q set network.lan.ipaddr="10.0.0.1"
+	uci -q set network.lan.ipaddr="192.168.1.251"
 	uci -q set network.@globals[0].packet_steering=1
 	uci commit network
   
@@ -145,8 +148,6 @@ test $version -lt 1 && {
 	uci -q set system.@system[0].conloglevel='4'
 	uci -q set system.@system[0].cronloglevel='8'
 	uci commit system
-	
-	/etc/init.d/fa-fancontrol disable >/dev/null 2>&1
 }
 
 # kB
