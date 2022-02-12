@@ -83,7 +83,7 @@ esac
 done
 
 REPO_BRANCH="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | jq -r '.[].name' | grep v21 | head -n 1 | sed -e 's/v//')"
-git clone -b v$REPO_BRANCH --depth 1 https://github.com/openwrt/openwrt
+git clone -b v$REPO_BRANCH https://github.com/openwrt/openwrt
 svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
 
 cd openwrt
@@ -96,8 +96,8 @@ elif [[ $firmware == "Rpi-4B" ]]; then
 fi
 
 
-read -p "请输入后台地址 [回车默认192.168.1.251]: " ip
-ip=${ip:-"192.168.1.251"}
+read -p "请输入后台地址 [回车默认192.168.1.252]: " ip
+ip=${ip:-"192.168.1.252"}
 echo "您的后台地址为: $ip"
 cp -rf devices/common/* ./
 cp -rf devices/$firmware/* ./
@@ -111,11 +111,10 @@ if [ -f "devices/$firmware/diy.sh" ]; then
 fi
 cp -Rf ./diy/* ./
 if [ -f "devices/common/default-settings" ]; then
-	sed -i "s/192.168.1.251/$ip/" devices/common/default-settings
-	cp -f devices/common/default-settings package/*/*/my-default-settings/files/uci.defaults
+	sed -i 's/192.168.1.252/$ip/' package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -f "devices/$firmware/default-settings" ]; then
-	sed -i "s/192.168.1.251/$ip/" devices/$firmware/default-settings
+	sed -i "s/192.168.1.252/$ip/" devices/$firmware/default-settings
 	cat devices/$firmware/default-settings >> package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -n "$(ls -A "devices/common/patches" 2>/dev/null)" ]; then
@@ -135,7 +134,7 @@ echo "                      *****5秒后开始编译*****
 
 1.你可以随时按Ctrl+C停止编译
 
-3.大陆用户编译前请准备好梯子,使用大陆白名单或全局模式"
+3.请使用大陆白名单或全局模式"
 echo
 echo
 echo

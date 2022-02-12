@@ -3,6 +3,10 @@
 sed -i 's,ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305,ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256,g' package/feeds/kiddin9/luci-app-bypass/root/usr/share/ssrplus/gentrojanconfig
 sed -i 's,TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256,TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256,g' package/feeds/kiddin9/luci-app-bypass/root/usr/share/ssrplus/gentrojanconfig
 
+sed -i -e 's/ autocore-arm/ my-autocore-arm/' -e 's/DEFAULT_PACKAGES +=/DEFAULT_PACKAGES += luci-app-cpufreq/' target/linux/bcm27xx/Makefile
+
+sed -i 's/DEFAULT_PACKAGES +=/DEFAULT_PACKAGES +=kmod-usb-net-asix-ax88179/' target/linux/bcm27xx/Makefile
+
 echo '
 CONFIG_ARM64_CRYPTO=y
 CONFIG_CRYPTO_AES_ARM64=y
@@ -24,4 +28,4 @@ CONFIG_REALTEK_PHY=y
 CONFIG_CPU_FREQ_GOV_USERSPACE=y
 CONFIG_CPU_FREQ_GOV_ONDEMAND=y
 CONFIG_CPU_FREQ_GOV_CONSERVATIVE=y
-' >> ./target/linux/bcm27xx/bcm2711/config-5.4
+' >> ./target/linux/bcm27xx/bcm2711/config-5.10
