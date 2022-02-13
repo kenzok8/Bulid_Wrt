@@ -127,6 +127,9 @@ cp devices/common/.config .config
 echo >> .config
 cat devices/$firmware/.config >> .config
 make menuconfig
+sed -i '/PACKAGE_kmod-/d' .config
+sed -i '$a CONFIG_ALL_KMODS=y' .config
+make defconfig
 echo
 echo
 echo

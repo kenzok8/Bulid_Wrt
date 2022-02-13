@@ -1,16 +1,12 @@
 #!/bin/bash
 
 shopt -s extglob
-rm -rf package/boot/uboot-rockchip target/linux/rockchip/{armv8/base-files,patches-5.10/.svn} files/usr/bin/.svn
+rm -rf package/boot/uboot-rockchip target/linux/rockchip/patches-5.10/.svn
 svn export --force https://github.com/friendlyarm/friendlywrt/branches/master/package/boot/uboot-rockchip package/boot/uboot-rockchip
-svn co https://github.com/friendlyarm/friendlywrt/branches/master/target/linux/rockchip/armv8/base-files target/linux/rockchip/armv8/base-files
+svn export --force https://github.com/friendlyarm/friendlywrt/branches/master/target/linux/rockchip/armv8/base-files target/linux/rockchip/armv8/base-files
 curl -sfLo target/linux/rockchip/image/armv8.mk https://raw.githubusercontent.com/friendlyarm/friendlywrt/master/target/linux/rockchip/image/armv8.mk
 svn co https://github.com/friendlyarm/friendlywrt/branches/master/target/linux/rockchip/patches-5.10 target/linux/rockchip/patches-5.10
 rm -rf target/linux/rockchip/armv8/base-files/{etc/{uci-defaults/vendor.defaults,inittab,banner},root}
-
-svn co https://github.com/friendlyarm/friendlywrt/trunk/target/linux/rockchip/armv8/base-files/usr/bin files/usr/bin
-curl -sfL https://raw.githubusercontent.com/friendlyarm/friendlywrt/master-v21.02/target/linux/rockchip/armv8/base-files/etc/init.d/fa-fancontrol --create-dirs -o files/etc/init.d/fa-fancontrol
-chmod +x files/usr/bin/* files/etc/init.d/fa-fancontrol
 
 sed -i 's,-mcpu=generic,-march=armv8-a+crypto+crc -mabi=lp64,g' include/target.mk
 

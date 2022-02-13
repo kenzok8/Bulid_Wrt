@@ -103,7 +103,7 @@ jobs:
     - name: Get current date
       id: date
       run: |
-        echo "date=$(date +'%m/%d_%Y_%H/%M')" >> $GITHUB_ENV
+        echo "date=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_ENV
         echo "date2=$(date +'%m/%d %Y')" >> $GITHUB_ENV
         VERSION="$(echo "${{github.event.action}}" | grep -Eo " [0-9.]+" | sed -e 's/ //')" || true
         [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV
@@ -184,6 +184,9 @@ jobs:
       run: |
         cd openwrt
         make defconfig
+        sed -i '/PACKAGE_kmod-/d' .config
+        sed -i '$a CONFIG_ALL_KMODS=y' .config
+        make defconfig
         make download -j$(($(nproc)+1)) &
 
     - name: Cache
@@ -230,21 +233,26 @@ jobs:
     - name: Organize files
       id: organize
       run: |
+        shopt -s extglob
         mkdir -p firmware/${{matrix.target}} kmods
-        if [ -f openwrt/bin/targets/*/*/*r4s*sysupgrade* ]; then
+        if [[ ${{matrix.target}} == "nanopi-r4s" || ${{matrix.target}} == "nanopi-r2c" ]]; then
+          rm -rf openwrt/bin/targets/*/*/!(*.gz)
+        fi
+        if [ -f openwrt/bin/targets/*/*/*r2s*sysupgrade* ]; then
           mkdir firmware/nanopi-r4s
           mv -f  openwrt/nanopi-r4s.config firmware/nanopi-r4s/ || true
           cp -rf openwrt/bin/targets/*/*/*r4s*sysupgrade* ./firmware/nanopi-r4s/ || true
-        fi
-        if [ -f openwrt/bin/targets/*/*/*r2c*sysupgrade* ]; then
           mkdir firmware/nanopi-r2c
           mv -f  openwrt/nanopi-r2c.config firmware/nanopi-r2c/ || true
           cp -rf openwrt/bin/targets/*/*/*r2c*sysupgrade* ./firmware/nanopi-r2c/ || true
+          cp -rf openwrt/bin/targets/*/*/*{combined,r2s*sysupgrade,rpi-4*sysupgrade}* ./firmware/${{matrix.target}}/ || true
+        else
+          cp -rf openwrt/bin/targets/*/*/*{combined,sysupgrade}* ./firmware/${{matrix.target}}/ || true
         fi
         cp openwrt/${{matrix.target}}.config  ./firmware/${{matrix.target}}/${{matrix.target}}.config || true
         cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}/${{matrix.target}}_kernel.config
         kernel_v="$(cat openwrt/include/kernel-5.10 | grep LINUX_KERNEL_HASH-5.10* | cut -f 2 -d - | cut -f 1 -d ' ')"
-        cp -rf openwrt/bin/targets/*/*/packages ./kmods/$kernel_v
+        cp -rf openwrt/bin/targets/*/*/packages ./kmods/$kernel_v || true
         rm -rf openwrt/bin/targets/*/*/packages/*.ipk
         cp -rf openwrt/bin/targets/*/*/*{combined,r2s*sysupgrade,rpi-4*sysupgrade}* ./firmware/${{matrix.target}}/ || true
         rename -v "s/openwrt-/${{ env.VERSION }}-openwrt-/" ./firmware/*/* || true
@@ -288,7 +296,7 @@ jobs:
 
     - name: Deploy imagebuilder to server
       uses: easingthemes/ssh-deploy@main
-      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser') && env.MTARGET
+      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
       with:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         ARGS: "-avzr"
@@ -316,7 +324,7 @@ jobs:
         cowurl=$(./transfer cow --block 2621440 -s --no-progress ${FIRMWARE})
         cowurl=$(echo $cowurl | grep -o -E "https[^ ]*")
         echo "COWURL=$cowurl" >> $GITHUB_ENV
-        echo "Download Link: ${{ env.EMOJI }} $cowurl ${{ env.EMOJI }} 🎈"
+        echo "Download Link: ${{ env.EMOJI }} $cowurl ${{ env.EMOJI }} "
  
     - name: Upload firmware to WeTransfer
       if: env.UPLOAD_FIRMWARE_TO_WETRANSFER == 'true' && ! contains(github.event.action, 'noup')
@@ -335,8 +343,8 @@ jobs:
       run: |
         echo -e "墙内加速下载 🎈:\n" >> release.txt
         echo -e "[腾讯云] (https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/ 🎈)\n" >> release.txt
-        [ ${{ env.WETRANS }} ] && echo -e "[WeTransfer] (${{ env.WETRANS }} 🗽)\n" >> release.txt
-        [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🐮)\n" >> release.txt
+        [ ${{ env.WETRANS }} ] && echo -e "[WeTransfer] (${{ env.WETRANS }} 🎈)\n" >> release.txt
+        [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🎈)\n" >> release.txt
         [ ${{ env.NOTICE }} ] && echo -e "${{ env.NOTICE }}" >> release.txt || true
 
     - name: Upload firmware for release
