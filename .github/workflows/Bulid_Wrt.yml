@@ -78,11 +78,11 @@ jobs:
 
     - name: Trigger Packages Update
       run: |
-        gitdate=$(curl -s "https://api.github.com/repos/kenzok78/Bulid_Wrt/actions/runs" | jq -r '.workflow_runs[0].created_at')
+        gitdate=$(curl -s "https://api.github.com/repos/kenzok8/jell/actions/runs" | jq -r '.workflow_runs[0].created_at')
         gitdate=$(date -d "$gitdate" +%s)
         now=$(date -d "$(date +'%Y.%m.%d-%H%M')" +%s)
         if [[ $(expr $gitdate + 300) < $now ]]; then
-          curl -X POST https://api.github.com/repos/kenzok78/Bulid_Wrt/dispatches \
+          curl -X POST https://api.github.com/repos/kenzok8/jell/dispatches \
             -H "Accept: application/vnd.github.everest-preview+json" \
             -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
           --data '{"event_type": "update"}'
