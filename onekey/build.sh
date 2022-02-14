@@ -1,7 +1,7 @@
 #/bin/bash
 echo
 echo
-echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
+echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok8/jell"
 echo
 echo
 sleep 2s
@@ -84,7 +84,7 @@ done
 
 REPO_BRANCH="$(curl -s https://api.github.com/repos/openwrt/openwrt/tags | jq -r '.[].name' | grep v21 | head -n 1 | sed -e 's/v//')"
 git clone -b v$REPO_BRANCH https://github.com/openwrt/openwrt
-svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
+svn export https://github.com/kenzok8/jell/trunk/devices openwrt/devices
 
 cd openwrt
 if [[ $firmware == "x86_64" ]]; then
@@ -126,10 +126,11 @@ fi
 cp devices/common/.config .config
 echo >> .config
 cat devices/$firmware/.config >> .config
-make menuconfig
-sed -i '/PACKAGE_kmod-/d' .config
-sed -i '$a CONFIG_ALL_KMODS=y' .config
 make defconfig
+for i in $(make --file=preset_pkg.mk presetpkg); do
+	sed -i "\$a CONFIG_PACKAGE_$i=y" .config
+done
+make menuconfig
 echo
 echo
 echo
