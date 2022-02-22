@@ -103,7 +103,7 @@ jobs:
     - name: Get current date
       id: date
       run: |
-        echo "date=$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_ENV
+        echo "date=$(date +'%m/%d_%Y_%H/%M')" >> $GITHUB_ENV
         echo "date2=$(date +'%m/%d %Y')" >> $GITHUB_ENV
         VERSION="$(echo "${{github.event.action}}" | grep -Eo " [0-9.]+" | sed -e 's/ //')" || true
         [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV
@@ -151,8 +151,8 @@ jobs:
         fi
         cp -Rf ./diy/* ./ || true
         if [ -f "devices/${{matrix.target}}/default-settings" ]; then
-          echo >> package/*/*/my-default-settings/files/uci.defaults
-          cat devices/${{matrix.target}}/default-settings >> package/*/*/my-default-settings/files/uci.defaults
+          echo >> package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
+          cat devices/${{matrix.target}}/default-settings >> package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
         fi
         cp -f devices/common/$CONFIG_FILE .config
         if [ -f "devices/${{matrix.target}}/$CONFIG_FILE" ]; then
@@ -171,9 +171,9 @@ jobs:
     - name: Default PPPOE Setting
       if: env.PPPOE_USERNAME && env.PPPOE_PASSWD
       run: |
-        sed -i '$i uci set network.wan.username=${{ env.PPPOE_USERNAME }}' openwrt/package/*/*/my-default-settings/files/uci.defaults
-        sed -i '$i uci set network.wan.password=${{ env.PPPOE_PASSWD }}' openwrt/package/*/*/my-default-settings/files/uci.defaults
-        sed -i '$i uci commit network' openwrt/package/*/*/my-default-settings/files/uci.defaults
+        sed -i '$i uci set network.wan.username=${{ env.PPPOE_USERNAME }}' openwrt/package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
+        sed -i '$i uci set network.wan.password=${{ env.PPPOE_PASSWD }}' openwrt/package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
+        sed -i '$i uci commit network' openwrt/package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
               
     - name: SSH connection to Actions
       uses: kenzok78/debugger-action@master
@@ -184,8 +184,9 @@ jobs:
       run: |
         cd openwrt
         make defconfig
-        sed -i '/PACKAGE_kmod-/d' .config
-        sed -i '$a CONFIG_ALL_KMODS=y' .config
+        for i in $(make --file=preset_pkg.mk presetpkg); do
+          sed -i "\$a CONFIG_PACKAGE_$i=y" .config
+        done
         make defconfig
         make download -j$(($(nproc)+1)) &
 
@@ -263,6 +264,9 @@ jobs:
           echo $md5 >> $i/version.txt
           echo v$REPO_BRANCH >> $i/version.txt
         done
+        rm -rf openwrt/bin/targets/*/*/*.img.gz
+        mkdir ${{ env.REPO_BRANCH }}
+        cp -rf openwrt/bin/targets ${{ env.REPO_BRANCH }}/
         Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
         echo "EMOJI=${Emoji[$[$RANDOM % ${#Emoji[@]}]]}" >> $GITHUB_ENV
         if [ ${{matrix.target}} == "x86_64" ]; then
@@ -272,7 +276,7 @@ jobs:
 
     - name: Deploy firmware to server
       uses: easingthemes/ssh-deploy@main
-      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
+      if: env.SSH_PRIVATE_KEY && contains(github.event.action, 'ser')
       with:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         ARGS: "-avzr --exclude="
@@ -300,18 +304,18 @@ jobs:
       with:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         ARGS: "-avzr"
-        SOURCE: openwrt/bin/targets
+        SOURCE: ${{ env.REPO_BRANCH }}
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
         REMOTE_USER: root
-        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/releases/${{ env.REPO_BRANCH }}/"
+        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/releases/"
 
     - name: Upload firmware for artifact
       uses: actions/upload-artifact@main
       continue-on-error: true
       if: env.UPLOAD_FIRMWARE_FOR_ARTIFACT == 'true'
       with:
-        name: ${{ env.VERSION }} ${{matrix.target}}
+        name: ${{ env.VERSION }}_${{matrix.target}}
         path: |
           ./firmware/
           openwrt/bin/targets/*/
@@ -324,7 +328,7 @@ jobs:
         cowurl=$(./transfer cow --block 2621440 -s --no-progress ${FIRMWARE})
         cowurl=$(echo $cowurl | grep -o -E "https[^ ]*")
         echo "COWURL=$cowurl" >> $GITHUB_ENV
-        echo "Download Link: ${{ env.EMOJI }} $cowurl ${{ env.EMOJI }} "
+        echo "Download Link: ${{ env.EMOJI }} $cowurl ${{ env.EMOJI }} 🚀"
  
     - name: Upload firmware to WeTransfer
       if: env.UPLOAD_FIRMWARE_TO_WETRANSFER == 'true' && ! contains(github.event.action, 'noup')
@@ -334,7 +338,7 @@ jobs:
         wetrans=$(./transfer wet -s -p 16 --no-progress ${FIRMWARE})
         wetrans=$(echo $wetrans | grep -o -E "https[^ ]*")
         echo "WETRANS=$wetrans" >> $GITHUB_ENV
-        echo "Download Link: ${{ env.EMOJI }} $wetrans ${{ env.EMOJI }} 🎈"
+        echo "Download Link: ${{ env.EMOJI }} $wetrans ${{ env.EMOJI }} 🚀"
 
     - name: Create release
       id: create_release
@@ -342,9 +346,9 @@ jobs:
       continue-on-error: true
       run: |
         echo -e "墙内加速下载 🎈:\n" >> release.txt
-        echo -e "[腾讯云] (https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/ 🎈)\n" >> release.txt
+        echo -e "[搬瓦工] (https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/ 🎈)\n" >> release.txt
         [ ${{ env.WETRANS }} ] && echo -e "[WeTransfer] (${{ env.WETRANS }} 🎈)\n" >> release.txt
-        [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🎈)\n" >> release.txt
+        [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🐮)\n" >> release.txt
         [ ${{ env.NOTICE }} ] && echo -e "${{ env.NOTICE }}" >> release.txt || true
 
     - name: Upload firmware for release
