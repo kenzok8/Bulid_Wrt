@@ -12,8 +12,8 @@ on:
   # push: 
   #   branches:
   #     - master
-  schedule:
-    - cron: 30 18 * * *
+  #schedule:
+  #  - cron: 30 18 * * *
   workflow_dispatch:
     inputs:
       version:
@@ -66,19 +66,3 @@ jobs:
           -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
           -d '{"event_type": "Rpi-4B ${{ github.event.inputs.version }}", "client_payload": {"target": "Rpi-4B"}}'
 
-    - name: Delete workflow runs
-      uses: GitRML/delete-workflow-runs@main
-      continue-on-error: true
-      with:
-        retain_days: 1
-        keep_minimum_runs: 0
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@master
-      continue-on-error: true
-      if: env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 2
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}

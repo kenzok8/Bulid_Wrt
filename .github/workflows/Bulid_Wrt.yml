@@ -80,7 +80,7 @@ jobs:
       run: |
         gitdate=$(curl -s "https://api.github.com/repos/kenzok8/jell/actions/runs" | jq -r '.workflow_runs[0].created_at')
         gitdate=$(date -d "$gitdate" +%s)
-        now=$(date -d "$(date +'%Y.%m.%d-%H-%M')" +%s)
+        now=$(date -d "$(date '+%Y-%m-%d %H:%M:%S')" +%s)
         if [[ $(expr $gitdate + 300) < $now ]]; then
           curl -X POST https://api.github.com/repos/kenzok8/jell/dispatches \
             -H "Accept: application/vnd.github.everest-preview+json" \
@@ -103,7 +103,7 @@ jobs:
     - name: Get current date
       id: date
       run: |
-        echo "date=$(date +'%m/%d_%Y_%H/%M')" >> $GITHUB_ENV
+        echo "date=$(date +'%m/%d/%Y_%H/%M')" >> $GITHUB_ENV
         echo "date2=$(date +'%m/%d %Y')" >> $GITHUB_ENV
         VERSION="$(echo "${{github.event.action}}" | grep -Eo " [0-9.]+" | sed -e 's/ //')" || true
         [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV
@@ -264,6 +264,7 @@ jobs:
           echo $md5 >> $i/version.txt
           echo v$REPO_BRANCH >> $i/version.txt
         done
+        rm -rf openwrt/bin/targets/*/*/!(*.tar.gz,*buildinfo,packages)
         mkdir ${{ env.REPO_BRANCH }}
         cp -rf openwrt/bin/targets ${{ env.REPO_BRANCH }}/
         Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")

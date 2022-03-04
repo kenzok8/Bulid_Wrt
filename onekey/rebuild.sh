@@ -1,7 +1,7 @@
 #/bin/bash
 echo
 echo
-echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kiddin9/OpenWrt_x86-r2s-r4s"
+echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
 echo
 echo
 
@@ -104,12 +104,12 @@ echo "                      *****5秒后开始编译*****
 
 1.你可以随时按Ctrl+C停止编译
 
-3.大陆用户编译前请准备好梯子,使用大陆白名单或全局模式"
+3.请使用大陆白名单或全局模式"
 echo
 echo
 sleep 3s
 
-sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kiddin9/*/Makefile
+sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/jell/*/Makefile
 
 make -j$(($(nproc)+1)) download v=s ; make -j$(($(nproc)+1)) || make -j1 V=s
 
