@@ -19,7 +19,7 @@ echo
 clear
 
 rm -Rf openwrt/common openwrt/files openwrt/devices
-svn export https://github.com/kiddin9/OpenWrt_x86-r2s-r4s/trunk/devices openwrt/devices
+svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
 cd openwrt
 
 git checkout .
@@ -109,7 +109,7 @@ echo
 echo
 sleep 3s
 
-sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/jell/*/Makefile
+sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kiddin9/*/Makefile
 
 make -j$(($(nproc)+1)) download v=s ; make -j$(($(nproc)+1)) || make -j1 V=s
 
