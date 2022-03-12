@@ -195,6 +195,7 @@ jobs:
       uses: klever1988/cachewrtbuild@main
       with:
         ccache: 'true'
+        clean: ${{ contains(github.event.action, 'nocache') }}
         prefix: ${{ github.workspace }}/openwrt
 
     - name: Compile the firmware

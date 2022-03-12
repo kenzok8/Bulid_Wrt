@@ -59,7 +59,7 @@ sed -i 's/max_requests 3/max_requests 20/g' package/network/services/uhttpd/file
 #rm -rf ./feeds/packages/lang/{golang,node}
 
 sed -i "s/tty1::askfirst/tty1::respawn/g" target/linux/*/base-files/etc/inittab
-date=`date +%m.%d.%Y`
+date=`date +%m.%d`
 sed -i -e "/\(# \)\?REVISION:=/c\REVISION:=$date" -e '/VERSION_CODE:=/c\VERSION_CODE:=$(REVISION)' include/version.mk
 
 sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-defaults.mk
