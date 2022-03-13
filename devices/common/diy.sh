@@ -64,9 +64,7 @@ sed -i -e "/\(# \)\?REVISION:=/c\REVISION:=$date" -e '/VERSION_CODE:=/c\VERSION_
 
 sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-defaults.mk
 sed -i 's/ +kmod-thermal//' package/kernel/mt76/Makefile
-
 sed -i 's/Kiddin/kenzo/g' package/base-files/files/etc/banner
-sed -i 's#openwrt/luci#kenzo/openwrt-luci#g' /usr/lib/lua/luci/view/themes/*/footer.htm
 
 sed -i \
 	-e "s/+\(luci\|luci-ssl\|uhttpd\)\( \|$\)/\2/" \
