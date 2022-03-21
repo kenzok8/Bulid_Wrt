@@ -321,7 +321,7 @@ jobs:
         username: root
         password: ${{ secrets.PASSWORD }}
         script: |
-          cd /www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/kmods/*
+          cd /www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/kmods/$(cat openwrt/include/kernel-5.10 | grep LINUX_KERNEL_HASH-5.10* | cut -f 2 -d - | cut -f 1 -d ' ')
           opkg &
 
     - name: Upload firmware for artifact
