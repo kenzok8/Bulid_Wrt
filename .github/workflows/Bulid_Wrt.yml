@@ -289,8 +289,9 @@ jobs:
       if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser') && env.MTARGET
       with:
         host: ${{ secrets.REMOTE_HOST }}
+        port: ${{ secrets.REMOTE_PORT }}
         username: root
-        key: ${{ env.SSH_PRIVATE_KEY }}
+        password: ${{ secrets.PASSWORD }}
         script: |
           cd /www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/
           opkg &
