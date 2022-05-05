@@ -65,12 +65,17 @@ jobs:
           -H "Accept: application/vnd.github.everest-preview+json" \
           -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
           -d '{"event_type": "Rpi-4B ${{ github.event.inputs.version }}", "client_payload": {"target": "Rpi-4B"}}'
+          curl \
+          -X POST https://api.github.com/repos/${{ github.repository }}/dispatches \
+          -H "Accept: application/vnd.github.everest-preview+json" \
+          -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
+          -d '{"event_type": "phicomm-N1 ${{ github.event.inputs.version }}", "client_payload": {"target": "phicomm-N1"}}'
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
         retain_days: 1
-        keep_minimum_runs: 0
+        keep_minimum_runs: 1
 
     - name: Remove old Releases
       uses: dev-drprasad/delete-older-releases@v0.1.0
@@ -78,4 +83,3 @@ jobs:
       with:
         keep_latest: 3
         delete_tags: true
-

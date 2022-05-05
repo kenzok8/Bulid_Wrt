@@ -1,7 +1,7 @@
 #/bin/bash
 echo
 echo
-echo "本脚本仅适用于在Ubuntu环境下编译 kenzo"
+echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
 echo
 echo
 sleep 2s
@@ -96,8 +96,8 @@ elif [[ $firmware == "Rpi-4B" ]]; then
 fi
 
 
-read -p "请输入后台地址 [回车默认10.0.0.1]: " ip
-ip=${ip:-"10.0.0.1"}
+read -p "请输入后台地址 [回车默认192.168.1.252]: " ip
+ip=${ip:-"192.168.1.252"}
 echo "您的后台地址为: $ip"
 cp -rf devices/common/* ./
 cp -rf devices/$firmware/* ./
@@ -111,10 +111,10 @@ if [ -f "devices/$firmware/diy.sh" ]; then
 fi
 cp -Rf ./diy/* ./
 if [ -f "devices/common/default-settings" ]; then
-	sed -i 's/10.0.0.1/$ip/' package/*/*/my-default-settings/files/etc/uci-defaults/99-default-settings
+	sed -i 's/192.168.1.252/$ip/' package/*/*/my-default-settings/files/etc/uci-defaults/99-default-settings
 fi
 if [ -f "devices/$firmware/default-settings" ]; then
-	sed -i "s/10.0.0.1/$ip/" devices/$firmware/default-settings
+	sed -i "s/192.168.1.252/$ip/" devices/$firmware/default-settings
 	cat devices/$firmware/default-settings >> package/*/*/my-default-settings/files/etc/uci-defaults/99-default-settings
 fi
 if [ -n "$(ls -A "devices/common/patches" 2>/dev/null)" ]; then
@@ -136,9 +136,9 @@ echo
 echo
 echo "                      *****5秒后开始编译*****
 
-1.可以随时按Ctrl+C停止编译
+1.你可以随时按Ctrl+C停止编译
 
-3.使用大陆白名单或全局模式"
+3.大陆用户编译前请准备好梯子,使用大陆白名单或全局模式"
 echo
 echo
 echo

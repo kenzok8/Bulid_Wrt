@@ -1,7 +1,10 @@
 --- a/target/imagebuilder/Makefile
 +++ b/target/imagebuilder/Makefile
-@@ -40,11 +40,9 @@ $(BIN_DIR)/$(IB_NAME).tar.xz: clean
+@@ -38,13 +38,14 @@ $(BIN_DIR)/$(IB_NAME).tar.xz: clean
+ 		./files/repositories.conf \
+ 		$(TMP_DIR)/.targetinfo \
  		$(TMP_DIR)/.packageinfo \
++		$(TOPDIR)/files \
  		$(PKG_BUILD_DIR)/
  
 -ifeq ($(CONFIG_IB_STANDALONE),)
@@ -9,18 +12,19 @@
  	$(call FeedSourcesAppend,$(PKG_BUILD_DIR)/repositories.conf)
  	$(VERSION_SED_SCRIPT) $(PKG_BUILD_DIR)/repositories.conf
 -endif
++	$(SED) 's/^src\/gz \(.*\) https.*top\/\(packages.*\)/src \1 file:\/\/www\/wwwroot\/op.supes.top\/\2/' $(PKG_BUILD_DIR)/repositories.conf
++	$(SED) 's/\/kiddin9//' $(PKG_BUILD_DIR)/repositories.conf
  
  	$(INSTALL_DIR) $(PKG_BUILD_DIR)/packages
  	# create an empty package index so `opkg` doesn't report an error
 
 --- a/target/imagebuilder/files/Makefile
 +++ b/target/imagebuilder/files/Makefile
-@@ -113,6 +113,15 @@ BUILD_PACKAGES:=$(filter-out $(filter -%,$(BUILD_PACKAGES)) $(patsubst -%,%,$(fi
+@@ -113,6 +113,14 @@ BUILD_PACKAGES:=$(filter-out $(filter -%,$(BUILD_PACKAGES)) $(patsubst -%,%,$(fi
  PACKAGES:=
  
  _call_image: staging_dir/host/.prereq-build
-+	rm -rf $(KERNEL_BUILD_DIR)/tmp
-+	[ "$(DATE)" ] && DATE="$(DATE).`date +'%Y'`" || DATE="`date +'%m.%d.%Y'`"; \
++	[ "$(DATE)" ] && DATE="$(DATE)" || DATE="`date +'%m.%d.%Y'`"; \
 +	mkdir -p $(USER_FILES)/etc/uci-defaults || true; \
 +	echo -e " \
 +	sed -i \"s/[0-9]\+.[0-9]\+.[0-9]\{4\}/$$DATE/\" /etc/openwrt_release \n \
@@ -31,56 +35,118 @@
  	echo 'Building images for $(BOARD)$(if $($(USER_PROFILE)_NAME), - $($(USER_PROFILE)_NAME))'
  	echo 'Packages: $(BUILD_PACKAGES)'
  	echo
-@@ -164,7 +174,14 @@ package_install: FORCE
+@@ -124,6 +132,8 @@ _call_image: staging_dir/host/.prereq-build
+ 	$(MAKE) -s build_image
+ 	$(MAKE) -s json_overview_image_info
+ 	$(MAKE) -s checksum
++	rm -rf $(KERNEL_BUILD_DIR)/tmp
++	rm -rf $(KERNEL_BUILD_DIR)/root.*
+ 
+ _call_manifest: FORCE
+ 	rm -rf $(TARGET_DIR)
+@@ -164,7 +174,15 @@ package_install: FORCE
  	@echo Installing packages...
  	$(OPKG) install $(firstword $(wildcard $(LINUX_DIR)/libc_*.ipk $(PACKAGE_DIR)/libc_*.ipk))
  	$(OPKG) install $(firstword $(wildcard $(LINUX_DIR)/kernel_*.ipk $(PACKAGE_DIR)/kernel_*.ipk))
 -	$(OPKG) install $(BUILD_PACKAGES)
-+	packages="$(BUILD_PACKAGES) luci-i18n-base-zh-cn luci-i18n-base-en"; \
++	packages="luci-i18n-base-zh-cn luci-i18n-base-en"; \
 +	for p in $(BUILD_PACKAGES); do \
 +		if [[ $$p == luci-app-* && "`$(OPKG) list | grep luci-i18n-\`echo $$p | cut -d - -f 3-\`-zh-cn`" ]]; then \
-+			packages="$$packages luci-i18n-`echo $$p | cut -d - -f 3-`-zh-cn"; \
++			packages="luci-i18n-`echo $$p | cut -d - -f 3-`-zh-cn $$packages"; \
 +		fi \
 +	done; \
-+	$(OPKG) install --force-overwrite --force-checksum --force-depends --force-maintainer $$packages
++	$(OPKG) install --force-overwrite --force-checksum --force-depends $(BUILD_PACKAGES); \
++	$(OPKG) install $$packages || true
 +	$(OPKG) install --force-overwrite --force-checksum --force-depends --force-maintainer --force-reinstall my-default-settings
  
  prepare_rootfs: FORCE
  	@echo
-@@ -183,7 +200,8 @@ build_image: FORCE
+@@ -183,7 +201,7 @@ build_image: FORCE
  	@echo
  	@echo Building images...
  	rm -rf $(BUILD_DIR)/json_info_files/
 -	$(NO_TRACE_MAKE) -C target/linux/$(BOARD)/image install TARGET_BUILD=1 IB=1 EXTRA_IMAGE_NAME="$(EXTRA_IMAGE_NAME)" \
-+	[ "$(PARTSIZE)" -ge 100 2>/dev/null ] && [ "$(PARTSIZE)" -le 3072 2>/dev/null ] && ROOT_PARTSIZE="$(PARTSIZE)"; \
-+	nice $(NO_TRACE_MAKE) -C target/linux/$(BOARD)/image install TARGET_BUILD=1 IB=1 EXTRA_IMAGE_NAME="$(EXTRA_IMAGE_NAME)" PARTSIZE="$$ROOT_PARTSIZE" FILESYSTEMS="$(FILESYSTEMS)" \
++	nice -n 19 $(NO_TRACE_MAKE) -C target/linux/$(BOARD)/image install TARGET_BUILD=1 IB=1 EXTRA_IMAGE_NAME="$(EXTRA_IMAGE_NAME)" \
  		$(if $(USER_PROFILE),PROFILE="$(USER_PROFILE)")
  
  $(BIN_DIR)/profiles.json: FORCE
 
 --- a/include/image.mk
 +++ b/include/image.mk
-@@ -33,6 +33,13 @@ KDIR=$(KERNEL_BUILD_DIR)
- KDIR_TMP=$(KDIR)/tmp
- DTS_DIR:=$(LINUX_DIR)/arch/$(LINUX_KARCH)/boot/dts
+@@ -7,6 +7,7 @@ include $(INCLUDE_DIR)/prereq.mk
+ include $(INCLUDE_DIR)/kernel.mk
+ include $(INCLUDE_DIR)/version.mk
+ include $(INCLUDE_DIR)/image-commands.mk
++-include $(TOPDIR)/.profiles.mk
  
-+ifneq ($(PARTSIZE),)
-+  CONFIG_TARGET_ROOTFS_PARTSIZE := $(PARTSIZE)
-+endif
-+ifeq ($(FILESYSTEMS),ext4)
-+  CONFIG_TARGET_ROOTFS_EXT4FS := y
-+  CONFIG_TARGET_ROOTFS_SQUASHFS := n
-+endif
- IMG_PREFIX_EXTRA:=$(if $(EXTRA_IMAGE_NAME),$(call sanitize,$(EXTRA_IMAGE_NAME))-)
- IMG_PREFIX_VERNUM:=$(if $(CONFIG_VERSION_FILENAMES),$(call sanitize,$(VERSION_NUMBER))-)
- IMG_PREFIX_VERCODE:=$(if $(CONFIG_VERSION_CODE_FILENAMES),$(call sanitize,$(VERSION_CODE))-)
-@@ -225,7 +232,8 @@ $(eval $(foreach S,$(JFFS2_BLOCKSIZE),$(call Image/mkfs/jffs2/template,$(S))))
+ ifndef IB
+   ifdef CONFIG_TARGET_PER_DEVICE_ROOTFS
+@@ -225,10 +226,10 @@ $(eval $(foreach S,$(JFFS2_BLOCKSIZE),$(call Image/mkfs/jffs2/template,$(S))))
  $(eval $(foreach S,$(NAND_BLOCKSIZE),$(call Image/mkfs/jffs2-nand/template,$(S))))
  
  define Image/mkfs/squashfs-common
--	$(STAGING_DIR_HOST)/bin/mksquashfs4 $(call mkfs_target_dir,$(1)) $@ \
 +	echo -998 > /proc/$$$$/oom_score_adj || true
-+	nice $(STAGING_DIR_HOST)/bin/mksquashfs4 $(call mkfs_target_dir,$(1)) $@ \
+ 	$(STAGING_DIR_HOST)/bin/mksquashfs4 $(call mkfs_target_dir,$(1)) $@ \
  		-nopad -noappend -root-owned \
- 		-comp $(SQUASHFSCOMP) $(SQUASHFSOPT) \
- 		-processors 1
+-		-comp $(SQUASHFSCOMP) $(SQUASHFSOPT) \
+-		-processors 1
++		-comp $(SQUASHFSCOMP) $(SQUASHFSOPT)
+ endef
+ 
+ ifeq ($(CONFIG_TARGET_ROOTFS_SECURITY_LABELS),y)
+@@ -291,11 +292,34 @@ define Image/gzip-ext4-padded-squashfs
+ 
+ endef
+ 
++ROOTFSTZ = $(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED))-rootfs.tar.gz
+ ifdef CONFIG_TARGET_ROOTFS_TARGZ
+   define Image/Build/targz
+ 	$(TAR) -cp --numeric-owner --owner=0 --group=0 --mode=a-s --sort=name \
+ 		$(if $(SOURCE_DATE_EPOCH),--mtime="@$(SOURCE_DATE_EPOCH)") \
+-		-C $(TARGET_DIR)/ . | gzip -9n > $(BIN_DIR)/$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED))-rootfs.tar.gz
++		-C $(TARGET_DIR)/ . | gzip -9n > $(BIN_DIR)/$(ROOTFSTZ)
++
++	mkdir $(BUILD_DIR)/json_info_files
++	touch $(BUILD_DIR)/json_info_files/$(ROOTFSTZ).json
++	@mkdir -p $$(shell dirname $$@)
++	DEVICE_ID="$(PROFILE_SANITIZED)" \
++	BIN_DIR="$(BIN_DIR)" \
++	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
++	IMAGE_NAME="$(ROOTFSTZ)" \
++	IMAGE_TYPE="rootfs" \
++	IMAGE_FILESYSTEM="rootfs" \
++	IMAGE_PREFIX="$(IMG_PREFIX)" \
++	DEVICE_VENDOR="$$(DEVICE_VENDOR)" \
++	DEVICE_MODEL="$($(PROFILE)_NAME)" \
++	DEVICE_VARIANT="$$(DEVICE_VARIANT)" \
++	DEVICE_TITLE="$($(PROFILE)_NAME)" \
++	DEVICE_PACKAGES="$($(PROFILE)_PACKAGES)" \
++	TARGET="$(BOARD)" \
++	SUBTARGET="$(if $(SUBTARGET),$(SUBTARGET),generic)" \
++	VERSION_NUMBER="$(VERSION_NUMBER)" \
++	VERSION_CODE="$(VERSION_CODE)" \
++	SUPPORTED_DEVICES="$($(PROFILE)_SUPPORTED_DEVICES)" \
++	$(TOPDIR)/scripts/json_add_image_info.py $(BUILD_DIR)/json_info_files/$(ROOTFSTZ).json
+   endef
+ endif
+ 
+
+--- a/scripts/json_overview_image_info.py
++++ b/scripts/json_overview_image_info.py
+@@ -47,7 +47,7 @@ def get_initial_output(image_info):
+ 
+ 
+ if output:
+-    default_packages, output["arch_packages"] = run(
++    default_packages, output["arch_packages"], output["kernel_version"] = run(
+         [
+             "make",
+             "--no-print-directory",
+@@ -55,6 +55,7 @@ def get_initial_output(image_info):
+             "target/linux/",
+             "val.DEFAULT_PACKAGES",
+             "val.ARCH_PACKAGES",
++            "val.LINUX_VERSION",
+         ],
+         stdout=PIPE,
+         stderr=PIPE,

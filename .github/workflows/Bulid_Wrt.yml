@@ -25,7 +25,7 @@ env:
   DOCKER_ID: ${{ secrets.DOCKER_ID }}
   DOCKER_PASSWD: ${{ secrets.DOCKER_PASSWD }}
   TZ: Asia/Shanghai
-  
+
 jobs:
   build:
     runs-on: Ubuntu-20.04
@@ -68,13 +68,17 @@ jobs:
         if [ ${{matrix.target}} == "x86_64" ]; then
             echo "ARCH=linux/amd64" >> $GITHUB_ENV
             echo "MTARGET=x86_64" >> $GITHUB_ENV
-        elif [[ ${{matrix.target}} =~ (Rpi-4B|nanopi-r2s|nanopi-r4s) ]]; then
-            echo "ARCH=linux/arm64" >> $GITHUB_ENV
-        fi
-        if [ ${{matrix.target}} == "Rpi-4B" ]; then
+        elif [[ ${{matrix.target}} =~ "(phicomm-N1|redmi-ax6s|redmi-ax6s)" ]]; then
+            echo "MTARGET=aarch64_cortex-a53" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} == "cr660x" ]]; then
+            echo "MTARGET=mipsel_24kc" >> $GITHUB_ENV
+        else
+          echo "ARCH=linux/arm64" >> $GITHUB_ENV
+          if [[ ${{matrix.target}} == "Rpi-4B" ]]; then
             echo "MTARGET=aarch64_cortex-a72" >> $GITHUB_ENV
-        elif [ ${{matrix.target}} == "nanopi-r2s" ]; then
+          else
             echo "MTARGET=aarch64_generic" >> $GITHUB_ENV
+          fi
         fi
 
     - name: Trigger Packages Update
@@ -100,6 +104,8 @@ jobs:
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean ) &
         sudo timedatectl set-timezone "$TZ"
+        sudo mkdir -p /workdir
+        sudo chown $USER:$GROUPS /workdir
     
     - name: Get current date
       id: date
@@ -110,8 +116,9 @@ jobs:
         [ "$VERSION" ] && echo "VERSION=$VERSION" >> $GITHUB_ENV || echo "VERSION=$(date +'%m.%d')" >> $GITHUB_ENV
 
     - name: Clone source code
+      working-directory: /workdir
       run: |
-        [ "$REPO_BRANCH" ] ||
+        [ "${{ env.REPO_BRANCH }}" ] ||
             REPO_BRANCH="$((curl -gs -H 'Content-Type: application/json' \
                -H "Authorization: Bearer ${{ secrets.REPO_TOKEN }}" \
                -X POST -d '{ "query": "query {repository(owner: \"openwrt\", name: \"openwrt\") {refs(refPrefix: \"refs/tags/\", last: 4, orderBy: {field: TAG_COMMIT_DATE, direction: ASC}) {edges {node {name}}}}}"}' https://api.github.com/graphql) | jq -r '.data.repository.refs.edges[].node.name' | grep v21 | tail -n 1 | sed -e 's/v//')"
@@ -124,19 +131,13 @@ jobs:
             curl -fL -m 60 -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-$REPO_BRANCH-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -m 60 -o sdk.tar.xz https://openwrt.tetaneutral.net/releases/21.02-SNAPSHOT/targets/rockchip/armv8/openwrt-sdk-21.02-SNAPSHOT-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         elif [[ ${{matrix.target}} =~ "Rpi-4B" ]]; then
             curl -fL -m 60 -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-$REPO_BRANCH-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -m 60 -o sdk.tar.xz https://openwrt.tetaneutral.net/releases/21.02-SNAPSHOT/targets/bcm27xx/bcm2711/openwrt-sdk-21.02-SNAPSHOT-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+        elif [[ ${{matrix.target}} =~ "phicomm-N1" ]]; then
+            curl -fL -m 60 -o sdk.tar.xz https://downloads.openwrt.org/releases/$REPO_BRANCH/targets/armvirt/64/openwrt-sdk-$REPO_BRANCH-armvirt-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || curl -fL -m 60 -o sdk.tar.xz https://openwrt.tetaneutral.net/releases/21.02-SNAPSHOT/targets/armvirt/64/openwrt-sdk-21.02-SNAPSHOT-armvirt-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
         fi
         fi
+        ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-        
-    - name: Free up disk space
-      if: env.FREE_UP_DISK == 'true'
-      env:
-        DEBIAN_FRONTEND: noninteractive
-      run: |
-        sudo mkdir -p -m 777 /mnt/openwrt/dl /mnt/openwrt/staging_dir /mnt/openwrt/build_dir/hostpkg openwrt/build_dir
-        ln -sf /mnt/openwrt/dl openwrt/dl
-        ln -sf /mnt/openwrt/staging_dir openwrt/staging_dir
-        ln -sf /mnt/openwrt/build_dir/hostpkg openwrt/build_dir/hostpkg
+        echo "$REPO_BRANCH"
         
     - name: Load custom configuration
       run: |
@@ -164,9 +165,9 @@ jobs:
     - name: Apply patches
       run: |
         cd openwrt
-        find "devices/common/patches" -type f ! -path 'devices/common/patches/china_mirrors.patch' -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward --no-backup-if-mismatch"
+        find "devices/common/patches" -type f ! -name 'china_mirrors.patch' -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward"
         if [ -n "$(ls -A "devices/${{matrix.target}}/patches" 2>/dev/null)" ]; then
-          find "devices/${{matrix.target}}/patches" -type f -name '*.patch' ! -name '*.revert.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward --no-backup-if-mismatch"
+          find "devices/${{matrix.target}}/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward"
         fi
         
     - name: Default PPPOE Setting
@@ -175,7 +176,13 @@ jobs:
         sed -i '$i uci set network.wan.username=${{ env.PPPOE_USERNAME }}' openwrt/package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
         sed -i '$i uci set network.wan.password=${{ env.PPPOE_PASSWD }}' openwrt/package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
         sed -i '$i uci commit network' openwrt/package/*/*/my-default-settings/files/etc/uci-defaults/95-default-settings
-              
+
+    - name: Defconfig
+      run: |
+        cd openwrt
+        make defconfig
+        cat .config
+
     - name: SSH connection to Actions
       uses: kenzok78/debugger-action@master
       if: contains(github.event.action, 'ssh')
@@ -184,11 +191,6 @@ jobs:
       id: package
       run: |
         cd openwrt
-        make defconfig
-        for i in $(make --file=preset_pkg.mk presetpkg); do
-          sed -i "\$a CONFIG_PACKAGE_$i=y" .config
-        done
-        make defconfig
         make download -j$(($(nproc)+1)) &
 
     - name: Cache
@@ -206,28 +208,6 @@ jobs:
         make -j$(($(nproc)+1)) || make -j1 V=s
         echo "::set-output name=status::success"
         mv -f .config ${{matrix.target}}.config
-        if [ "${{matrix.target}}" == "nanopi-r2s" ]; then
-            echo "开始编译R2C"
-            cp -f devices/common/$CONFIG_FILE .config
-            echo >> .config
-            cat devices/nanopi-r2c/$CONFIG_FILE >> .config
-            make defconfig
-            make -j$(($(nproc)+1)) || make -j1 V=s || {
-            echo "R2C编译失败";
-            exit 1;
-            }
-            mv -f .config nanopi-r2c.config
-            echo "开始编译R4S"
-            cp -f devices/common/$CONFIG_FILE .config
-            echo >> .config
-            cat devices/nanopi-r4s/$CONFIG_FILE >> .config
-            make defconfig
-            make -j$(($(nproc)+1)) || make -j1 V=s || {
-            echo "R4S编译失败";
-            exit 1;
-            }
-            mv -f .config nanopi-r4s.config
-        fi
    
     - name: Check space usage
       run: df -hT
@@ -237,36 +217,16 @@ jobs:
       run: |
         shopt -s extglob
         mkdir -p firmware/${{matrix.target}} kmods
-        if [[ ${{matrix.target}} == "nanopi-r4s" || ${{matrix.target}} == "nanopi-r2c" ]]; then
-          rm -rf openwrt/bin/targets/*/*/!(*.gz)
-        fi
-        if [ -f openwrt/bin/targets/*/*/*r2s*sysupgrade* ]; then
-          mkdir firmware/nanopi-r4s
-          mv -f  openwrt/nanopi-r4s.config firmware/nanopi-r4s/ || true
-          cp -rf openwrt/bin/targets/*/*/*r4s*sysupgrade* ./firmware/nanopi-r4s/ || true
-          mkdir firmware/nanopi-r2c
-          mv -f  openwrt/nanopi-r2c.config firmware/nanopi-r2c/ || true
-          cp -rf openwrt/bin/targets/*/*/*r2c*sysupgrade* ./firmware/nanopi-r2c/ || true
-          cp -rf openwrt/bin/targets/*/*/*{combined,r2s*sysupgrade,rpi-4*sysupgrade}* ./firmware/${{matrix.target}}/ || true
-        else
-          cp -rf openwrt/bin/targets/*/*/*{combined,sysupgrade}* ./firmware/${{matrix.target}}/ || true
-        fi
+        cp -rf openwrt/bin/targets/*/*/*{combined,sysupgrade}* ./firmware/${{matrix.target}}/ || true
         cp openwrt/${{matrix.target}}.config  ./firmware/${{matrix.target}}/${{matrix.target}}.config || true
         cp openwrt/build_dir/target-*/linux-*/linux-*/.config ./firmware/${{matrix.target}}/${{matrix.target}}_kernel.config
-        kernel_v="$(cat openwrt/include/kernel-5.10 | grep LINUX_KERNEL_HASH-5.10* | cut -f 2 -d - | cut -f 1 -d ' ')"
-        cp -rf openwrt/bin/targets/*/*/packages ./kmods/$kernel_v || true
-        cp -rf openwrt/bin/packages/*/base/*-firmware* ./kmods/$kernel_v || true
+        cp -rf openwrt/bin/targets/*/*/packages ./kmods/${{ env.KERNEL }} || true
         rm -rf openwrt/bin/targets/*/*/packages/*.ipk
-        cp -rf openwrt/bin/targets/*/*/*{combined,r2s*sysupgrade,rpi-4*sysupgrade}* ./firmware/${{matrix.target}}/ || true
         rename -v "s/openwrt-/${{ env.VERSION }}-openwrt-/" ./firmware/*/* || true
         rename -v "s/friendlyarm_//" ./firmware/*/*gz || true
-        for i in $(ls -d firmware/*/); do
-          echo "${{ env.VERSION }}.$(date +'%Y')" > $i/version.txt
-          md5=$((md5sum $i/*squashfs-sysupgrade* || md5sum $i/*squashfs-combined-efi*) | awk '{print $1}') 2>/dev/null
-          echo $md5 >> $i/version.txt
-          echo v$REPO_BRANCH >> $i/version.txt
-        done
-        rm -rf openwrt/bin/targets/*/*/!(*.tar.*|*buildinfo|packages)
+        rename -v "s/embedfire_//" ./firmware/*/*gz || true
+        rename -v "s/xiaomi_redmi-router/redmi/" *bin || true
+        rename -v "s/xiaoyu_)//" *bin || true
         mkdir ${{ env.REPO_BRANCH }}
         cp -rf openwrt/bin/targets ${{ env.REPO_BRANCH }}/
         Emoji=("🎉" "🤞" "✨" "🎁" "🎈" "🎄" "🎨" "💋" "🍓" "🍕" "🍉" "💐" "🌴" "🚀" "🛸" "🗽" "⛅" "🌈" "🔥" "⛄" "🐶" "🏅" "🦄" "🐤")
@@ -278,7 +238,7 @@ jobs:
 
     - name: Deploy firmware to server
       uses: easingthemes/ssh-deploy@main
-      if: env.SSH_PRIVATE_KEY
+      if: env.SSH_PRIVATE_KEY && contains(github.event.action, 'toser')
       with:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         ARGS: "-avzr --exclude="
@@ -310,18 +270,29 @@ jobs:
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
         REMOTE_USER: root
-        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/releases/"
+        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/releases/tmp/"
+        
+    - name: Deploy some packages to server
+      uses: easingthemes/ssh-deploy@main
+      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        ARGS: "-avzr"
+        SOURCE: openwrt/bin/packages/*/base/*-firmware*
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
+        REMOTE_USER: root
+        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/"
 
     - name: remote ssh command
       uses: appleboy/ssh-action@master
       if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser') && env.MTARGET
       with:
         host: ${{ secrets.REMOTE_HOST }}
-        port: ${{ secrets.REMOTE_PORT }}
         username: root
-        password: ${{ secrets.PASSWORD }}
+        key: ${{ env.SSH_PRIVATE_KEY }}
         script: |
-          cd /www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/kmods/$(cat openwrt/include/kernel-5.10 | grep LINUX_KERNEL_HASH-5.10* | cut -f 2 -d - | cut -f 1 -d ' ')
+          cd /www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/
           opkg &
 
     - name: Upload firmware for artifact
@@ -332,6 +303,8 @@ jobs:
         name: ${{ env.VERSION }}_${{matrix.target}}
         path: |
           ./firmware/
+          ${{ env.REPO_BRANCH }}
+          openwrt/bin/packages/*/base/*-firmware*
 
     - name: Upload firmware to cowtransfer
       if: env.UPLOAD_FIRMWARE_TO_COWTRANSFER == 'true'
@@ -410,7 +383,7 @@ jobs:
       if: env.TELEGRAM_TOKEN && ! contains(github.event.action, 'notg')
       continue-on-error: true
       run: |
-        [ steps.compile.outputs.status == 'success' ] && curl -k --data chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" || curl -k --data chat_id="${{ secrets.TELEGRAM_TO }}" --data "text=❌ OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage"
+        [ steps.compile.outputs.status == 'success' ] && curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage" || curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=❌ OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage"
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
