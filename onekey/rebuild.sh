@@ -1,7 +1,7 @@
 #/bin/bash
 echo
 echo
-echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
+echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kiddin9/OpenWrt_x86-r2s-r4s"
 echo
 echo
 
@@ -19,7 +19,7 @@ echo
 clear
 
 rm -Rf openwrt/common openwrt/files openwrt/devices
-svn export https://github.com/kenzok78/Bulid_Wrt/trunk/devices openwrt/devices
+svn export https://github.com/kiddin9/OpenWrt_x86-r2s-r4s/trunk/devices openwrt/devices
 cd openwrt
 
 git checkout .
@@ -46,8 +46,8 @@ fi
 
 echo
 
-read -p "请输入后台地址 [回车默认192.168.1.252]: " ip
-ip=${ip:-"192.168.1.252"}
+read -p "请输入后台地址 [回车默认10.0.0.1]: " ip
+ip=${ip:-"10.0.0.1"}
 echo "您的后台地址为: $ip"
 
 rm -Rf feeds package/feeds common files diy tmp
@@ -65,10 +65,10 @@ if [ -f "devices/$firmware/diy.sh" ]; then
 fi
 cp -Rf ./diy/* ./
 if [ -f "devices/common/default-settings" ]; then
-	sed -i 's/192.168.1.252/$ip/' package/*/*/my-default-settings/files/uci.defaults
+	sed -i 's/10.0.0.1/$ip/' package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -f "devices/$firmware/default-settings" ]; then
-	sed -i 's/192.168.1.252/$ip/' devices/$firmware/default-settings
+	sed -i 's/10.0.0.1/$ip/' devices/$firmware/default-settings
 	cat devices/$firmware/default-settings >> package/*/*/my-default-settings/files/uci.defaults
 fi
 if [ -n "$(ls -A "devices/common/patches" 2>/dev/null)" ]; then
@@ -109,7 +109,7 @@ echo
 echo
 sleep 3s
 
-sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/jell/*/Makefile
+sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kiddin9/*/Makefile
 
 make -j$(($(nproc)+1)) download v=s ; make -j$(($(nproc)+1)) || make -j1 V=s
 

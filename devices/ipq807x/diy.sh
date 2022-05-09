@@ -2,7 +2,8 @@
 
 shopt -s extglob
 
-rm -rf package/firmware/ipq-wifi package/qca
+rm -rf package/boot/uboot-envtools package/firmware/ipq-wifi package/qca
+svn export https://github.com/Boos4721/openwrt/trunk/package/boot/uboot-envtools package/boot/uboot-envtools
 svn export https://github.com/Boos4721/openwrt/trunk/package/firmware/ipq-wifi package/firmware/ipq-wifi
 svn export https://github.com/Boos4721/openwrt/trunk/package/qca package/qca
 
@@ -12,6 +13,7 @@ rm -rf target/linux/ipq807x/{.svn,patches-5.15/.svn}
 svn co https://github.com/Boos4721/openwrt/trunk/target/linux/ipq807x/patches-5.15 target/linux/ipq807x/patches-5.15
 
 sed -i 's/autocore-arm /my-autocore-arm /' target/linux/ipq807x/Makefile
+sed -i 's/DEFAULT_PACKAGES +=/DEFAULT_PACKAGES += luci-app-turboacc/' target/linux/ipq807x/Makefile
 
 echo '
 CONFIG_ARM64_CRYPTO=y

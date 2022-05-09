@@ -12,7 +12,7 @@
  	$(call FeedSourcesAppend,$(PKG_BUILD_DIR)/repositories.conf)
  	$(VERSION_SED_SCRIPT) $(PKG_BUILD_DIR)/repositories.conf
 -endif
-+	$(SED) 's/^src\/gz \(.*\) https.*top\/\(packages.*\)/src \1 file:\/\/www\/wwwroot\/op.supes.top\/\2/' $(PKG_BUILD_DIR)/repositories.conf
++	$(SED) 's/^src\/gz \(.*\) https.*top\/\(.*\)/src \1 file:\/\/www\/wwwroot\/op.supes.top\/\2/' $(PKG_BUILD_DIR)/repositories.conf
 +	$(SED) 's/\/kiddin9//' $(PKG_BUILD_DIR)/repositories.conf
  
  	$(INSTALL_DIR) $(PKG_BUILD_DIR)/packages
@@ -116,8 +116,8 @@
 +	IMAGE_TYPE="rootfs" \
 +	IMAGE_FILESYSTEM="rootfs" \
 +	IMAGE_PREFIX="$(IMG_PREFIX)" \
-+	DEVICE_VENDOR="$$(DEVICE_VENDOR)" \
-+	DEVICE_MODEL="$($(PROFILE)_NAME)" \
++	DEVICE_VENDOR="$(shell echo $($(PROFILE)_NAME) | cut -d " " -f1)" \
++	DEVICE_MODEL="$(shell echo $($(PROFILE)_NAME) | cut -d " " -f2-)" \
 +	DEVICE_VARIANT="$$(DEVICE_VARIANT)" \
 +	DEVICE_TITLE="$($(PROFILE)_NAME)" \
 +	DEVICE_PACKAGES="$($(PROFILE)_PACKAGES)" \
