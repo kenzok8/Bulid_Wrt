@@ -126,19 +126,19 @@ jobs:
         if [[ "${{ contains(github.event.action, 'sdk') }}" == "true" ]]; then
         cd openwrt
         if [[ ${{matrix.target}} == "x86_64" ]]; then
-            curl -fL -m 60 -o sdk.tar.xz https://${{ secrets.REMOTE_HOST }}/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
+            curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         elif [[ ${{matrix.target}} == "rockchip" ]]; then
-            curl -fL -m 60 -o sdk.tar.xz https://${{ secrets.REMOTE_HOST }}/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
+            curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         elif [[ ${{matrix.target}} == "bcm27xx_bcm2711" ]]; then
-            curl -fL -m 60 -o sdk.tar.xz https://${{ secrets.REMOTE_HOST }}/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
+            curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         elif [[ ${{matrix.target}} == "armvirt_64" ]]; then
-            curl -fL -m 60 -o sdk.tar.xz https://${{ secrets.REMOTE_HOST }}/releases/$REPO_BRANCH/targets/armvirt/64/openwrt-sdk-armvirt-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
+            curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/armvirt/64/openwrt-sdk-armvirt-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         elif [[ ${{matrix.target}} == "ramips_mt7621" ]]; then
-            curl -fL -m 60 -o sdk.tar.xz https://${{ secrets.REMOTE_HOST }}/releases/$REPO_BRANCH/targets/ramips/mt7621/openwrt-sdk-ramips-mt7621_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
+            curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/ramips/mt7621/openwrt-sdk-ramips-mt7621_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         elif [[ ${{matrix.target}} == "mediatek_mt7622" ]]; then
-            curl -fL -m 60 -o sdk.tar.xz https://${{ secrets.REMOTE_HOST }}/releases/$REPO_BRANCH/targets/mediatek/mt7622/openwrt-sdk-mediatek-mt7622_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
+            curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/mediatek/mt7622/openwrt-sdk-mediatek-mt7622_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         elif [[ ${{matrix.target}} == "ipq807x" ]]; then
-            curl -fL -m 60 -o sdk.tar.xz https://${{ secrets.REMOTE_HOST }}/releases/$REPO_BRANCH/targets/ipq807x/generic/openwrt-sdk-ipq807x-generic_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
+            curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/ipq807x/generic/openwrt-sdk-ipq807x-generic_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         fi
         fi
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
@@ -198,7 +198,7 @@ jobs:
       run: |
         cd openwrt
         make download -j$(($(nproc)+1)) &
-        sleep 5
+        sleep 6
 
     - name: Cache
       uses: klever1988/cachewrtbuild@main
@@ -320,15 +320,22 @@ jobs:
         echo "Download Link: ${{ env.EMOJI }} $wetrans ${{ env.EMOJI }} 🚀"
 
     - name: Create release
-      id: create_release
-      if: env.REPO_TOKEN && env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
-      continue-on-error: true
-      run: |
-        echo -e "墙内加速下载 🚀:\n" >> release.txt
-        echo -e "[搬瓦工] (https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/ ☁)\n" >> release.txt
-        [ ${{ env.WETRANS }} ] && echo -e "[WeTransfer] (${{ env.WETRANS }} 🗽)\n" >> release.txt
-        [ ${{ env.COWURL }} ] && echo -e "[奶牛上传] (${{ env.COWURL }} 🐮)\n" >> release.txt
-        [ ${{ env.NOTICE }} ] && echo -e "${{ env.NOTICE }}" >> release.txt || true
+      id: tag
+      uses: ncipollo/release-action@v1
+      with:
+        name: ${{ env.DATE }} 官网源码编译
+        token: ${{ secrets.REPO_TOKEN }}
+        body: |
+          + 官网源码编译固件（每周更新）
+          + 使用方式：
+          +  1. armvirt_64(S905x3、N1、贝壳云、我家云)
+          +  2. bcm27xx_bcm2711(树莓派4B)
+          +  3. IPQ8071X(小米ax3600、红米ax5)
+          +  4. mediatek_mt7622(Banana Pi)	
+          +  5. ramips_mt7621(Redmi ax6) 
+          +  6. rockchip瑞芯微		  
+          +  7. x86_64架构(最常用的固件)		  
+        artifacts: ${{ env.FIRMWARE }}/*
 
     - name: Upload firmware for release
       uses: softprops/action-gh-release@master
@@ -376,7 +383,7 @@ jobs:
       if: env.TELEGRAM_TOKEN && ! contains(github.event.action, 'notg')
       continue-on-error: true
       run: |
-        curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage"
+        curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://op.supes.top/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage"
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
