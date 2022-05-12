@@ -26,7 +26,7 @@ sh -c "curl -sfL https://github.com/coolsnowwolf/lede/commit/06fcdca1bb9c6de6ccd
 
 sed -i '/	refresh_config();/d' scripts/feeds
 [ ! -f feeds.conf ] && {
-sed -i '$a src-git jell https://github.com/kenzok8/jell.git;main' feeds.conf.default
+sed -i '$a src-git jell https://github.com/kenzok78/jell.git;main' feeds.conf.default
 }
 
 rm -rf package/{base-files,network/config/firewall,network/services/dnsmasq,network/services/ppp,system/opkg,libs/mbedtls}
