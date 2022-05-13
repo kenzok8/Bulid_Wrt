@@ -32,7 +32,7 @@
 
 ##### 特色:
 
-+ 官网源码,内核5.10 最新源码同步.
++ 官网源码,内核5.15 最新源码同步.
 
 + 原生纯净,包含ipv6,主流开源插件.
 
@@ -65,24 +65,3 @@
 + Turbo ACC 网络加速
 
 ##### 默认后台地址 192.168.1.252,密码 root
-
-##### 注意：
-
-1. **不**要用 **root** 用户 git 和编译！！！
-2. 国内用户编译前请准备好梯子,使用大陆白名单或全局模式
-3. 请使用Ubuntu 64bit，推荐  Ubuntu 18 或 Ubuntu 20
-
-##### 一键脚本:
-
- 首次编译:
-```
-screen -S openwrt
-wget -O compile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/main/onekey/compile.sh && bash compile.sh
-```
-
- 二次编译:
-```
-screen -S openwrt
-wget -O recompile.sh https://raw.githubusercontent.com/kenzok78/Bulid_Wrt/main/onekey/recompile.sh && bash recompile.sh
-```
-
