@@ -319,22 +319,18 @@ jobs:
         echo "Download Link: ${{ env.EMOJI }} $wetrans ${{ env.EMOJI }} 🚀"
 
     - name: Create release
-      id: tag
-      uses: ncipollo/release-action@v1
-      with:
-        name: ${{ env.DATE }} 官网源码编译
-        token: ${{ secrets.REPO_TOKEN }}
-        body: |
-          + 官网源码编译固件（每周更新）
-          + 使用方式：
-          +  1. armvirt_64(S905x3、N1、贝壳云、我家云)
-          +  2. bcm27xx_bcm2711(树莓派4B)
-          +  3. IPQ8071X(小米ax3600、红米ax5)
-          +  4. mediatek_mt7622(Banana Pi)	
-          +  5. ramips_mt7621(Redmi ax6) 
-          +  6. rockchip瑞芯微		  
-          +  7. x86_64架构(最常用的固件)		  
-        artifacts: ${{ env.FIRMWARE }}/*
+      id: create_release
+      if: env.REPO_TOKEN && env.UPLOAD_FIRMWARE_FOR_RELEASE == 'true'
+      continue-on-error: true
+      run: |
+        echo -e "+ 官网源码编译固件（每周更新）" >> release.txt 
+        echo -e "+  1. armvirt_64(S905x3、N1、贝壳云、我家云)" >> release.txt
+        echo -e "+  2. bcm27xx_bcm2711(树莓派4B)" >> release.txt
+        echo -e "+  3. IPQ8071X(小米ax3600、红米ax5)" >> release.txt
+        echo -e "+  4. mediatek_mt7622(Banana Pi)" >> release.txt
+        echo -e "+  5. ramips_mt7621(Redmi ax6)" >> release.txt
+        echo -e "+  6. rockchip瑞芯微" >> release.txt
+        echo -e "+  7. x86_64架构(最常用的固件)" >> release.txt
 
     - name: Upload firmware for release
       uses: softprops/action-gh-release@master
