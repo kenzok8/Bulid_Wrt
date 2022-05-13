@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: Build Wrt
+name: Build OpenWrt
 
 on: 
   repository_dispatch:
@@ -76,21 +76,21 @@ jobs:
           echo "ARCH=linux/arm64" >> $GITHUB_ENV
           if [[ ${{matrix.target}} == "bcm27xx_bcm2711" ]]; then
             echo "MTARGET=aarch64_cortex-a72" >> $GITHUB_ENV
-          elif [[ ${{matrix.target}} == "rockchip" ]]; then
+          elif [[ ${{matrix.target}} == "rockchip_armv8" ]]; then
             echo "MTARGET=aarch64_generic" >> $GITHUB_ENV
           fi
         fi
 
     - name: Trigger Packages Update
       run: |
-        gitdate=$(curl -s "https://api.github.com/repos/kenzok78/jell/actions/runs" | jq -r '.workflow_runs[0].created_at')
+        gitdate=$(curl -s "https://api.github.com/repos/kenzok8/jell/actions/runs" | jq -r '.workflow_runs[0].created_at')
         gitdate=$(date -d "$gitdate" +%s)
         now=$(date -d "$(date)" +%s)
         if [[ $(expr $gitdate + 300) < $now ]]; then
-          curl -X POST https://api.github.com/repos/kenzok78/jell/dispatches \
+          curl -X POST https://api.github.com/repos/kenzok8/jell/dispatches \
             -H "Accept: application/vnd.github.everest-preview+json" \
             -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
-          --data '{"event_type": "update"}'
+          --data '{"event_type": "update bulid"}'
         fi
 
     - name: Initialization environment
@@ -127,7 +127,7 @@ jobs:
         cd openwrt
         if [[ ${{matrix.target}} == "x86_64" ]]; then
             curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/x86/64/openwrt-sdk-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
-        elif [[ ${{matrix.target}} == "rockchip" ]]; then
+        elif [[ ${{matrix.target}} == "rockchip_armv8" ]]; then
             curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/rockchip/armv8/openwrt-sdk-rockchip-armv8_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
         elif [[ ${{matrix.target}} == "bcm27xx_bcm2711" ]]; then
             curl -fL -m 60 -o sdk.tar.xz https://op.supes.top/releases/$REPO_BRANCH/targets/bcm27xx/bcm2711/openwrt-sdk-bcm27xx-bcm2711_gcc-8.4.0_musl.Linux-x86_64.tar.xz || true
@@ -198,7 +198,7 @@ jobs:
       run: |
         cd openwrt
         make download -j$(($(nproc)+1)) &
-        sleep 6
+        sleep 5
 
     - name: Cache
       uses: klever1988/cachewrtbuild@main
@@ -295,7 +295,6 @@ jobs:
       if: env.UPLOAD_FIRMWARE_FOR_ARTIFACT == 'true'
       with:
         name: ${{ env.VERSION }}_${{matrix.target}}
-        run: |
         path: |
           ${{ env.REPO_BRANCH }}
 
@@ -383,7 +382,7 @@ jobs:
       if: env.TELEGRAM_TOKEN && ! contains(github.event.action, 'notg')
       continue-on-error: true
       run: |
-        curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://${{ secrets.REMOTE_HOST }}/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage"
+        curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=🎉 OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译成功 😋  https://op.supes.top/firmware/${{matrix.target}}/  ${{ env.COWURL }}   ${{ env.WETRANS }} 🚀" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage"
 
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main

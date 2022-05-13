@@ -26,19 +26,19 @@ sh -c "curl -sfL https://github.com/coolsnowwolf/lede/commit/06fcdca1bb9c6de6ccd
 
 sed -i '/	refresh_config();/d' scripts/feeds
 [ ! -f feeds.conf ] && {
-sed -i '$a src-git jell https://github.com/kenzok78/jell.git;main' feeds.conf.default
+sed -i '$a src-git kenzok8 https://github.com/kenzok8/jell.git;main' feeds.conf.default
 }
 
 rm -rf package/{base-files,network/config/firewall,network/services/dnsmasq,network/services/ppp,system/opkg,libs/mbedtls}
 
 ./scripts/feeds update -a
-./scripts/feeds install -a -p jell
+./scripts/feeds install -a -p kenzok8
 ./scripts/feeds install -a
-cd feeds/jell; git pull; cd -
+cd feeds/kenzok8; git pull; cd -
 
-sed -i "s/192.168.1/10.0.0/" package/feeds/jell/base-files/files/bin/config_generate
-rm -f package/feeds/packages/libpfring; svn export https://github.com/openwrt/packages/trunk/libs/libpfring package/feeds/jell/libpfring
-rm -f package/feeds/packages/xtables-addons; svn export https://github.com/openwrt/packages/trunk/net/xtables-addons package/feeds/jell/xtables-addons
+sed -i "s/192.168.1/10.0.0/" package/feeds/kenzok8/base-files/files/bin/config_generate
+rm -f package/feeds/packages/libpfring; svn export https://github.com/openwrt/packages/trunk/libs/libpfring package/feeds/kenzok8/libpfring
+rm -f package/feeds/packages/xtables-addons; svn export https://github.com/openwrt/packages/trunk/net/xtables-addons package/feeds/kenzok8/xtables-addons
 curl -sfL https://raw.githubusercontent.com/coolsnowwolf/packages/master/libs/xr_usb_serial_common/patches/0001-fix-build-with-kernel-5.15.patch -o package/feeds/packages/xr_usb_serial_common/patches/0001-fix-build-with-kernel-5.15.patch
 
 (
@@ -49,7 +49,7 @@ rm -rf target/linux/generic/hack-5.15/{220-gc_sections*,781-dsa-register*,780-dr
 ) &
 
 sed -i 's?zstd$?zstd ucl upx\n$(curdir)/upx/compile := $(curdir)/ucl/compile?g' tools/Makefile
-sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/jell/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
+sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/kenzok8/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
 sed -i 's/Os/O2/g' include/target.mk
 sed -i 's/$(TARGET_DIR)) install/$(TARGET_DIR)) install --force-overwrite --force-maintainer/' package/Makefile
 sed -i "/mediaurlbase/d" package/feeds/*/luci-theme*/root/etc/uci-defaults/*
@@ -65,19 +65,16 @@ sed -i "s/tty\(0\|1\)::askfirst/tty\1::respawn/g" target/linux/*/base-files/etc/
 date=`date +%m.%d.%Y`
 sed -i -e "/\(# \)\?REVISION:=/c\REVISION:=$date" -e '/VERSION_CODE:=/c\VERSION_CODE:=$(REVISION)' include/version.mk
 
-sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-defaults.mk
-sed -i 's/ +kmod-thermal//' package/kernel/mt76/Makefile
-
 sed -i \
 	-e "s/+\(luci\|luci-ssl\|uhttpd\)\( \|$\)/\2/" \
 	-e "s/+nginx\( \|$\)/+nginx-ssl\1/" \
 	-e 's/+python\( \|$\)/+python3/' \
 	-e 's?../../lang?$(TOPDIR)/feeds/packages/lang?' \
-	package/feeds/jell/*/Makefile
+	package/feeds/kenzok8/*/Makefile
 
 (
 if [ -f sdk.tar.xz ]; then
-	sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/jell/*/Makefile
+	sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kenzok8/*/Makefile
 	mkdir sdk
 	tar -xJf sdk.tar.xz -C sdk
 	cp -rf sdk/*/staging_dir/* ./staging_dir/
