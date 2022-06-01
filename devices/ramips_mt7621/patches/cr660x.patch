@@ -1,15 +1,22 @@
 --- a/target/linux/ramips/image/mt7621.mk
 +++ b/target/linux/ramips/image/mt7621.mk
-@@ -1831,7 +1831,7 @@ define Device/xiaomi_nand_separate
+@@ -1843,7 +1843,6 @@ define Device/xiaomi_nand_separate
    PAGESIZE := 2048
    KERNEL_SIZE := 4096k
    UBINIZE_OPTS := -E 5
 -  IMAGES += kernel1.bin rootfs0.bin
-+  IMAGES += kernel1.bin
    IMAGE/kernel1.bin := append-kernel
    IMAGE/rootfs0.bin := append-ubi | check-size
    IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-@@ -1915,30 +1915,14 @@ define Device/xiaomi_mi-router-cr660x
+@@ -1881,7 +1880,6 @@ define Device/xiaomi_mi-router-3-pro
+   IMAGE_SIZE := 255488k
+   DEVICE_VENDOR := Xiaomi
+   DEVICE_MODEL := Mi Router 3 Pro
+-  IMAGES += factory.bin
+   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+   IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | \
+ 	check-size
+@@ -1927,30 +1925,14 @@ define Device/xiaomi_mi-router-cr660x
    KERNEL_SIZE := 4096k
    UBINIZE_OPTS := -E 5
    IMAGE_SIZE := 128512k

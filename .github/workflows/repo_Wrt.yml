@@ -6,7 +6,7 @@
 # Blog: https://p3terx.com
 #=================================================
 
-name: Repo Wrt
+name: Repo Dispatcher
 
 on: 
   # push: 
@@ -29,12 +29,6 @@ jobs:
   build:
     runs-on: Ubuntu-20.04
     steps:
-    - name: cancel running workflows
-      uses: styfle/cancel-workflow-action@main
-      with:
-        workflow_id: Bulid_Wrt.yml,repo_Wrt.yml
-        access_token: ${{ github.token }}
-
     - name: Checkout
       uses: actions/checkout@main
 
@@ -59,7 +53,7 @@ jobs:
           -X POST https://api.github.com/repos/${{ github.repository }}/dispatches \
           -H "Accept: application/vnd.github.everest-preview+json" \
           -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
-          -d '{"event_type": "rockchip ${{ github.event.inputs.version }}", "client_payload": {"target": "rockchip"}}'
+          -d '{"event_type": "rockchip_armv8 ${{ github.event.inputs.version }}", "client_payload": {"target": "rockchip_armv8"}}'
           curl \
           -X POST https://api.github.com/repos/${{ github.repository }}/dispatches \
           -H "Accept: application/vnd.github.everest-preview+json" \
@@ -85,10 +79,9 @@ jobs:
           -H "Accept: application/vnd.github.everest-preview+json" \
           -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
           -d '{"event_type": "ipq807x ${{ github.event.inputs.version }}", "client_payload": {"target": "ipq807x"}}'
-
+          
     - name: Delete workflow runs
       uses: GitRML/delete-workflow-runs@main
       with:
         retain_days: 1
         keep_minimum_runs: 1
-
