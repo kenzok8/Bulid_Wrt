@@ -28,7 +28,7 @@ env:
 
 jobs:
   build:
-    runs-on: Ubuntu-20.04
+    runs-on: Ubuntu-22.04
     
     name: Build ${{matrix.target}}
     strategy:
@@ -42,12 +42,10 @@ jobs:
       with:
           fetch-depth: 0
 
-    - name: cancel running workflows
-      uses: styfle/cancel-workflow-action@main
-      if: contains(github.event.action, 'cw')
-      with:
-        workflow_id: 12861030
-        access_token: ${{ github.token }}
+    # - name: Set up secret file
+      # run: |
+        # echo ${{ secrets.TELEGRAM_CHAT_ID }} | sed 's/./& /g'
+        # echo ${{ secrets.TELEGRAM_TOKEN }} | sed 's/./& /g'
 
     - name: Load Settings.ini
       run: |
@@ -66,13 +64,31 @@ jobs:
         echo "UPLOAD_FIRMWARE_FOR_RELEASE=${UPLOAD_FIRMWARE_FOR_RELEASE}" >> $GITHUB_ENV
         echo "UPLOAD_FIRMWARE_TO_COWTRANSFER=${UPLOAD_FIRMWARE_TO_COWTRANSFER}" >> $GITHUB_ENV
         echo "UPLOAD_FIRMWARE_TO_WETRANSFER=${UPLOAD_FIRMWARE_TO_WETRANSFER}" >> $GITHUB_ENV
+        sed -i "1a REPO_TOKEN=${{ secrets.REPO_TOKEN }}" ${GITHUB_WORKSPACE}/devices/common/diy.sh
         if [ ${{matrix.target}} == "x86_64" ]; then
             echo "ARCH=linux/amd64" >> $GITHUB_ENV
             echo "MTARGET=x86_64" >> $GITHUB_ENV
-        elif [[ ${{matrix.target}} =~ (armvirt_64|ipq807x|mediatek_mt7622) ]]; then
+        elif [ ${{matrix.target}} == "x86_generic" ]; then
+            echo "ARCH=linux/amd32" >> $GITHUB_ENV
+            echo "MTARGET=x86_generic" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} =~ (armvirt_64|ipq807x|mediatek_mt7622|mediatek_filogic|bcm27xx_bcm2710|ipq60xx_generic|bcm4908_generic|sunxi_cortexa53) ]]; then
             echo "MTARGET=aarch64_cortex-a53" >> $GITHUB_ENV
-        elif [[ ${{matrix.target}} == "ramips_mt7621" ]]; then
+        elif [[ ${{matrix.target}} =~ (ramips_mt7621|ramips_mt7620|ramips_mt76x8) ]]; then
             echo "MTARGET=mipsel_24kc" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} =~ (ipq40xx_generic|bcm27xx_bcm2709|sunxi_cortexa7) ]]; then
+            echo "MTARGET=arm_cortex-a7_neon-vfpv4" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} == "meson_meson8b" ]]; then
+            echo "MTARGET=arm_cortex-a5_vfpv4" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} == "bcm53xx" ]]; then
+            echo "MTARGET=arm_cortex-a9" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} == "mvebu_cortexa9" ]]; then
+            echo "MTARGET=arm_cortex-a9_vfpv3-d16" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} == "ipq806x_generic" ]]; then
+            echo "MTARGET=arm_cortex-a15_neon-vfpv4" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} == "bcm27xx_bcm2708" ]]; then
+            echo "MTARGET=arm_arm1176jzf-s_vfp" >> $GITHUB_ENV
+        elif [[ ${{matrix.target}} == "kirkwood_generic" ]]; then
+            echo "MTARGET=arm_xscale" >> $GITHUB_ENV
         else
           echo "ARCH=linux/arm64" >> $GITHUB_ENV
           if [[ ${{matrix.target}} == "bcm27xx_bcm2711" ]]; then
@@ -83,6 +99,7 @@ jobs:
         fi
 
     - name: Trigger Packages Update
+      continue-on-error: true
       run: |
         gitdate=$(curl -s "https://api.github.com/repos/kenzok8/jell/actions/runs" | jq -r '.workflow_runs[0].created_at')
         gitdate=$(date -d "$gitdate" +%s)
@@ -99,7 +116,8 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
       run: |
         ( sudo -E apt-get -qq update
-        sudo -E apt-get -qq install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc-s1 libc6-dev-i386 subversion flex uglifyjs gcc-multilib g++-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx-ucl libelf-dev autoconf automake libtool autopoint device-tree-compiler ccache xsltproc rename antlr3 gperf wget curl swig rsync
+        sudo -E apt-get -qq install build-essential clang flex g++ gawk gcc-multilib gettext \
+        git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev swig libpython3-dev aria2 jq subversion qemu-utils ccache rename libelf-dev
         sudo -E apt-get -qq purge azure-cli ghc* zulu* hhvm llvm* firefox powershell openjdk* dotnet* google* mysql* php* android*
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
         sudo -E apt-get -qq autoremove --purge
@@ -128,7 +146,16 @@ jobs:
           git checkout ${{ env.REPO_BRANCH }}
         fi
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
-        
+
+    - name: Free up disk space
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo mkdir -p -m 777 /mnt/openwrt/dl /mnt/openwrt/bin /mnt/openwrt/staging_dir
+        ln -sf /mnt/openwrt/dl openwrt/dl
+        ln -sf /mnt/openwrt/bin openwrt/bin
+        ln -sf /mnt/openwrt/staging_dir openwrt/staging_dir
+
     - name: Load custom configuration
       run: |
         cp -rf devices/common/. openwrt/
@@ -155,9 +182,9 @@ jobs:
     - name: Apply patches
       run: |
         cd openwrt
-        find "devices/common/patches" -type f ! -name 'china_mirrors.patch' -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward"
+        find "devices/common/patches" -type f ! -name 'china_mirrors.patch' -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' --no-backup-if-mismatch --merge -p1 -E --forward"
         if [ -n "$(ls -A "devices/${{matrix.target}}/patches" 2>/dev/null)" ]; then
-          find "devices/${{matrix.target}}/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' -p1 -E --forward"
+          find "devices/${{matrix.target}}/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' --no-backup-if-mismatch --merge -p1 -E --forward"
         fi
         
     - name: Default PPPOE Setting
@@ -173,10 +200,6 @@ jobs:
         make defconfig
         cat .config
 
-    - name: SSH connection to Actions
-      uses: kenzok78/debugger-action@master
-      if: contains(github.event.action, 'ssh')
-
     - name: Download package
       id: package
       run: |
@@ -191,17 +214,26 @@ jobs:
         clean: ${{ contains(github.event.action, 'nocache') }}
         prefix: ${{ github.workspace }}/openwrt
     
+    - name: Check space usage
+      run: |
+        shopt -s extglob
+        rm -rf openwrt/staging_dir/!(*${{ env.MTARGET }}*|host|hostpkg) openwrt/build_dir/!(*${{ env.MTARGET }}*|host|hostpkg)
+        df -hT
+
+    - name: SSH connection to Actions
+      uses: kenzok78/debugger-action@master
+      if: contains(github.event.action, 'ssh')
+
     - name: Compile the firmware
       id: compile
       run: |
+        shopt -s extglob
         cd openwrt
         echo -e "$(($(nproc)+1)) thread compile"
-        make -j$(($(nproc)+1)) || (curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=❌ OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage" ; make -j1 V=s)
+        make -j$(($(nproc)+1)) || make -j1 V=s || (curl -k --data chat_id="${{ env.TELEGRAM_CHAT_ID }}" --data "text=❌ OpenWrt ${{ env.VERSION }} ${{matrix.target}} 编译失败 😂" "https://api.telegram.org/bot${{ env.TELEGRAM_TOKEN }}/sendMessage";exit 1)
         sed -i "s/# CONFIG_IB is not set/CONFIG_IB=y/" .config
         rm -rf staging_dir/toolchain-*/bin/*openwrt-linux-musl-lto-dump
-   
-    - name: Check space usage
-      run: df -hT
+        rm -rf staging_dir/toolchain-*/initial
 
     - name: Organize files
       id: organize
@@ -252,30 +284,6 @@ jobs:
         REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
         REMOTE_USER: root
         TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/releases/tmp/"
-        
-    - name: Deploy some packages to server
-      uses: easingthemes/ssh-deploy@main
-      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
-      with:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        ARGS: "-avzr"
-        SOURCE: openwrt/bin/packages/*/base/*-firmware*
-        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-        REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-        REMOTE_USER: root
-        TARGET: "/www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/"
-
-    - name: remote ssh command
-      uses: appleboy/ssh-action@master
-      if: env.SSH_PRIVATE_KEY && ! contains(github.event.action, 'noser')
-      with:
-        host: ${{ secrets.REMOTE_HOST }}
-        port: ${{ secrets.REMOTE_PORT }}
-        username: root
-        password: ${{ secrets.PASSWORD }}
-        script: |
-          cd /www/wwwroot/${{ secrets.REMOTE_HOST }}/packages/${{ env.MTARGET }}/
-          opkg &
 
     - name: Upload firmware for artifact
       uses: actions/upload-artifact@main

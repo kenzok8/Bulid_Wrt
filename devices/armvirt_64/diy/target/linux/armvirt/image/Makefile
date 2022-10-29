@@ -56,8 +56,8 @@ endef
 TARGET_DEVICES += mxqpro
 
 define Device/x96max
-  DEVICE_VENDOR := x96
-  DEVICE_MODEL := Max
+  DEVICE_VENDOR := x96 Max
+  DEVICE_MODEL := s905x2
   SOC := s905x2
   DEVICE_PACKAGES := 
 endef
@@ -95,12 +95,12 @@ define Device/odroid-n2
 endef
 TARGET_DEVICES += odroid-n2
 
-
 define Image/Build
 	export IMG_PREFIX="$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED))"; \
 	export BIN_DIR=$(BIN_DIR); \
 	export PARTSIZE=$(CONFIG_TARGET_ROOTFS_PARTSIZE); \
-	cd $(TOPDIR)/../openwrt_packit; \
+	cd /www/wwwroot/op.supes.top/bcache/armvirt/64/openwrt_packit; \
+	. ../modify_packit.sh; \
 	if [ $(PROFILE_SANITIZED) == "n1" ]; then \
 		./mk_s905d_n1.sh; \
 	elif [ $(PROFILE_SANITIZED) == "beikeyun" ]; then \
@@ -119,11 +119,12 @@ define Image/Build
 		./mk_s922x_odroid-n2.sh; \
 	elif [ $(PROFILE_SANITIZED) == "vplus" ]; then \
 		./mk_h6_vplus.sh; \
+	elif [ $(PROFILE_SANITIZED) == "fastrhino_r68s" ]; then \
+		./mk_rk3568_r68s.sh; \
 	elif [ $(PROFILE_SANITIZED) == "hk1" ]; then \
 		./mk_s905x3_multi.sh; \
 	fi; \
-	gzip -f9n $(BIN_DIR)/$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED)).img || true; \
-	rm -f $(BIN_DIR)/*.tar.gz
+	gzip -f9n $(BIN_DIR)/$(IMG_PREFIX)$(if $(PROFILE_SANITIZED),-$(PROFILE_SANITIZED)).img || true
 endef
 
 $(eval $(call BuildImage))

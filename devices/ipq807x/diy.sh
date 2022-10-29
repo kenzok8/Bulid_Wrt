@@ -2,49 +2,52 @@
 shopt -s extglob
 
 SHELL_FOLDER=$(dirname $(readlink -f "$0"))
+
 bash $SHELL_FOLDER/../common/kernel_5.15.sh
 
-rm -rf package/boot/uboot-envtools package/firmware/ipq-wifi package/firmware/ath11k* package/qca package/qat
-svn export --force https://github.com/Boos4721/openwrt/trunk/package/boot/uboot-envtools package/boot/uboot-envtools
-svn export --force https://github.com/Boos4721/openwrt/trunk/package/firmware/ipq-wifi package/firmware/ipq-wifi
-svn export --force https://github.com/Boos4721/openwrt/trunk/package/firmware/ath11k-board package/firmware/ath11k-board
-svn export --force https://github.com/Boos4721/openwrt/trunk/package/firmware/ath11k-firmware package/firmware/ath11k-firmware
-svn export --force https://github.com/Boos4721/openwrt/trunk/package/qca package/qca
-svn export --force https://github.com/Boos4721/openwrt/trunk/package/qat package/qat
-svn export --force https://github.com/Boos4721/openwrt/trunk/package/kernel/mac80211 package/kernel/mac80211
+rm -rf package/boot/uboot-envtools package/firmware/ipq-wifi package/firmware/ath11k* package/kernel/mac80211 target/linux/generic package/kernel/ath10k-ct
+svn export --force https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/boot/uboot-envtools package/boot/uboot-envtools
+svn export --force https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/firmware/ipq-wifi package/firmware/ipq-wifi
+svn export --force https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/firmware/ath11k-firmware package/firmware/ath11k-firmware
+svn export --force https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/kernel/mac80211 package/kernel/mac80211
+svn export --force https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/kernel/qca-nss-dp package/kernel/qca-nss-dp
+svn export --force https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/kernel/qca-ssdk package/kernel/qca-ssdk
+svn export --force https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/kernel/ath10k-ct package/kernel/ath10k-ct
 
-svn co https://github.com/Boos4721/openwrt/trunk/target/linux/generic/hack-5.15 target/linux/generic/hack-5.15
-svn co https://github.com/Boos4721/openwrt/trunk/target/linux/generic/pending-5.15 target/linux/generic/pending-5.15
-rm -rf target/linux/ipq807x/!(patches-5.15)
-svn co https://github.com/Boos4721/openwrt/trunk/target/linux/ipq807x target/linux/ipq807x
-rm -rf target/linux/ipq807x/{.svn,patches-5.15/.svn}
-svn co https://github.com/Boos4721/openwrt/trunk/target/linux/ipq807x/patches-5.15 target/linux/ipq807x/patches-5.15
+svn co https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/target/linux/generic target/linux/generic
+rm -rf target/linux/generic/.svn
+svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic/hack-5.15 target/linux/generic/hack-5.15
 
-sed -i 's/autocore-arm /my-autocore-arm /' target/linux/ipq807x/Makefile
-sed -i 's/DEFAULT_PACKAGES +=/DEFAULT_PACKAGES += luci-app-turboacc/' target/linux/ipq807x/Makefile
+svn co https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/target/linux/ipq807x target/linux/ipq807x
 
-echo '
-CONFIG_ARM64_CRYPTO=y
-CONFIG_CRYPTO_AES_ARM64=y
-CONFIG_CRYPTO_AES_ARM64_BS=y
-CONFIG_CRYPTO_AES_ARM64_CE=y
-CONFIG_CRYPTO_AES_ARM64_CE_BLK=y
-CONFIG_CRYPTO_AES_ARM64_CE_CCM=y
-CONFIG_CRYPTO_CRCT10DIF_ARM64_CE=y
-CONFIG_CRYPTO_AES_ARM64_NEON_BLK=y
-CONFIG_CRYPTO_CRYPTD=y
-CONFIG_CRYPTO_GF128MUL=y
-CONFIG_CRYPTO_GHASH_ARM64_CE=y
-CONFIG_CRYPTO_SHA1=y
-CONFIG_CRYPTO_SHA1_ARM64_CE=y
-CONFIG_CRYPTO_SHA256_ARM64=y
-CONFIG_CRYPTO_SHA2_ARM64_CE=y
-CONFIG_CRYPTO_SHA512_ARM64=y
-CONFIG_CRYPTO_SIMD=y
-CONFIG_REALTEK_PHY=y
-CONFIG_CPU_FREQ_GOV_USERSPACE=y
-CONFIG_CPU_FREQ_GOV_ONDEMAND=y
-CONFIG_CPU_FREQ_GOV_CONSERVATIVE=y
-CONFIG_MOTORCOMM_PHY=y
-CONFIG_SENSORS_PWM_FAN=y
-' >> ./target/linux/ipq807x/config-5.15
+git clone https://github.com/robimarko/nss-packages --depth 1 package/nss-packages
+
+rm -rf package/network feeds/kiddin9/{rtl8821cu,rtl88x2bu}
+
+svn co https://github.com/robimarko/openwrt/branches/ipq807x-5.15-pr/package/network package/network
+
+curl -sfL https://raw.githubusercontent.com/robimarko/openwrt/ipq807x-5.15-pr/include/kernel-5.15 -o include/kernel-5.15
+kernel_v="$(cat include/kernel-5.15 | grep LINUX_KERNEL_HASH-* | cut -f 2 -d - | cut -f 1 -d ' ')"
+echo "KERNEL=${kernel_v}" >> $GITHUB_ENV || true
+sed -i "s?targets/%S/.*'?targets/%S/$kernel_v'?" include/feeds.mk
+
+curl -sfL https://raw.githubusercontent.com/robimarko/openwrt/ipq807x-5.15-pr/package/kernel/linux/modules/netsupport.mk -o package/kernel/linux/modules/netsupport.mk
+
+curl -sfL https://raw.githubusercontent.com/Boos4721/openwrt/master/target/linux/ipq807x/patches-5.15/700-ipq8074-overclock-cpu-2.2ghz.patch -o target/linux/ipq807x/patches-5.15/700-ipq8074-overclock-cpu-2.2ghz.patch
+
+rm -rf package/kernel/mt76
+
+sed -i "s/tty\(0\|1\)::askfirst/tty\1::respawn/g" target/linux/*/base-files/etc/inittab
+
+sed -i '$a  \
+CONFIG_CPU_FREQ_GOV_POWERSAVE=y \
+CONFIG_CPU_FREQ_GOV_USERSPACE=y \
+CONFIG_CPU_FREQ_GOV_ONDEMAND=y \
+CONFIG_CPU_FREQ_GOV_CONSERVATIVE=y \
+' target/linux/ipq807x/config-5.15
+
+echo "
+CONFIG_PACKAGE_kmod-ipt-coova=n
+CONFIG_PACKAGE_kmod-pf-ring=n
+" >> devices/common/.config
+
