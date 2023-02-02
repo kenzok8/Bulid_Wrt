@@ -9,7 +9,7 @@
 [8]: https://github.com/kenzok78/Bulid_Wrt/releases
 [10]: https://img.shields.io/badge/Contact-telegram-blue
 [11]: https://t.me/joinchat/JjxmyRZZXJWb74I-sCrryA
-[12]: https://github.com/kenzok78/Bulid_Wrt/workflows/autobuild
+[12]: https://github.com/kenzok78/Bulid_Wrt/workflows/autobuild.badge.svg
 [13]: https://github.com/kenzok78/Bulid_Wrt/actions
 
 [![license][1]][2]
