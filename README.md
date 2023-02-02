@@ -9,7 +9,7 @@
 [8]: https://github.com/kenzok78/Bulid_Wrt/releases
 [10]: https://img.shields.io/badge/Contact-telegram-blue
 [11]: https://t.me/joinchat/JjxmyRZZXJWb74I-sCrryA
-[12]: https://github.com/kenzok78/Bulid_Wrt/workflows/autobuild/badge.svg
+[12]: https://github.com/kenzok78/Bulid_Wrt/workflows/autobuild
 [13]: https://github.com/kenzok78/Bulid_Wrt/actions
 
 [![license][1]][2]
@@ -18,7 +18,6 @@
 [![PRs Welcome][3]][4]
 [![Issue Welcome][5]][6]
 [![AutoBuild][12]][13]
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/kenzok8/openwrt_Build/nanopi-r4s.yml)
 
 <a href="https://t.me/joinchat/JjxmyRZZXJWb74I-sCrryA" target="_blank">Telegram</a>
 
