@@ -61,11 +61,10 @@ jobs:
         echo "UPLOAD_FIRMWARE_TO_COWTRANSFER=${UPLOAD_FIRMWARE_TO_COWTRANSFER}" >> $GITHUB_ENV
         echo "UPLOAD_FIRMWARE_TO_WETRANSFER=${UPLOAD_FIRMWARE_TO_WETRANSFER}" >> $GITHUB_ENV
         if [ ${{matrix.target}} == "x86_64" ]; then
-            echo "ARCH=linux/amd64" >> $GITHUB_ENV
             echo "MTARGET=x86_64" >> $GITHUB_ENV
         elif [ ${{matrix.target}} == "Rpi-4B" ]; then
             echo "MTARGET=aarch64_cortex-a72" >> $GITHUB_ENV
-        elif [ ${{matrix.target}} == "nanopi-r2s" ]; then
+         elif [ ${{matrix.target}} == "nanopi-r2s" ]; then
             echo "MTARGET=aarch64_generic" >> $GITHUB_ENV
         fi
 
