@@ -38,6 +38,13 @@ jobs:
       with:
         workflow_id: all
         access_token: ${{ github.token }}
+        
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      continue-on-error: true
+      with:
+        retain_days: 1
+        keep_minimum_runs: 0
 
     - name: Load Settings.ini
       run: |
@@ -67,10 +74,5 @@ jobs:
           -H "Authorization: token ${{ secrets.REPO_TOKEN }}" \
           -d '{"event_type": "aarch64_cortex-a72 ${{ github.event.inputs.packages }}", "client_payload": {"target": "Rpi-4B"}}'
 
-    - name: Delete workflow runs
-      uses: Mattraks/delete-workflow-runs@main
-      continue-on-error: true
-      with:
-        retain_days: 1
-        keep_minimum_runs: 0
+
 
