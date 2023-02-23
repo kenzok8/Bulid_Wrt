@@ -105,7 +105,7 @@ echo
 echo
 sleep 3s
 
-sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kenzok8/*/Makefile
+sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/jell/*/Makefile
 
 make -j$(($(nproc)+1)) download v=s ; make -j$(($(nproc)+1)) || make -j1 V=s
 
