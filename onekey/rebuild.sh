@@ -1,9 +1,5 @@
 #/bin/bash
 echo
-echo
-echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
-echo
-echo
 
 if [ "$USER" == "root" ]; then
 	echo
