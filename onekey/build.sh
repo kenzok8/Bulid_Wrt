@@ -1,9 +1,5 @@
 #/bin/bash
 echo
-echo
-echo "本脚本仅适用于在Ubuntu环境下编译 https://github.com/kenzok78/Bulid_Wrt"
-echo
-echo
 sleep 2s
 sudo apt-get update
 sudo apt-get upgrade
@@ -16,13 +12,7 @@ clear
 echo
 echo 
 echo 
-echo "|*******************************************|"
-echo "|                                           |"
-echo "|                                           |"
-echo "|           基本环境部署完成......          |"
-echo "|                                           |"
-echo "|                                           |"
-echo "|*******************************************|"
+echo          基本环境部署完成..... 
 echo
 echo
 
