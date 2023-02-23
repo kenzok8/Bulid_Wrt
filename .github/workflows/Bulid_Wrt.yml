@@ -64,9 +64,8 @@ jobs:
             echo "MTARGET=x86_64" >> $GITHUB_ENV
         elif [ ${{matrix.target}} == "Rpi-4B" ]; then
             echo "MTARGET=aarch64_cortex-a72" >> $GITHUB_ENV
-         elif [ ${{matrix.target}} == "nanopi-r2s" ]; then
+        elif [ ${{matrix.target}} == "nanopi-r2s" ]; then
             echo "MTARGET=aarch64_generic" >> $GITHUB_ENV
-          fi
         fi
 
     - name: Initialization environment
