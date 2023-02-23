@@ -94,18 +94,8 @@ jobs:
     - name: Clone source code
       working-directory: /workdir
       run: |
-        if [ ! "${{ env.REPO_BRANCH }}" ]; then
-          REPO_BRANCH="$((curl -gs -H 'Content-Type: application/json' \
-           -H "Authorization: Bearer ${{ secrets.REPO_TOKEN }}" \
-           -X POST -d '{ "query": "query {repository(owner: \"openwrt\", name: \"openwrt\") {refs(refPrefix: \"refs/tags/\", last: 4, orderBy: {field: TAG_COMMIT_DATE, direction: ASC}) {edges {node {name}}}}}"}' https://api.github.com/graphql) | jq -r '.data.repository.refs.edges[].node.name' | grep v22 | tail -n 1)"
-           if git clone $REPO_URL -b $REPO_BRANCH openwrt; then
-               echo "git clone $REPO_URL -b $REPO_BRANCH openwrt"
-           fi
-        elif [ "${{ env.REPO_BRANCH }}" ]; then
-           if git clone $REPO_URL -b ${{ env.REPO_BRANCH }} openwrt; then
-               echo "git clone $REPO_URL -b ${{ env.REPO_BRANCH }} openwrt"
-           fi
-        fi
+        latest_release="$(curl -s https://github.com/openwrt/openwrt/tags | grep -Eo "v[0-9\.]+\-*r*c*[0-9]*.tar.gz" | sed -n '/[2-9][0-9]/p' | sed -n 1p | sed 's/.tar.gz//g')"
+        git clone --single-branch -b ${latest_release} https://github.com/openwrt/openwrt openwrt_release
 
     - name: Free up disk space
       env:
