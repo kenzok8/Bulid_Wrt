@@ -33,12 +33,9 @@
 
 ##### 固件下载链接
 
-- [Lienol固件地址](https://op.dllkids.xyz/op/firmware/Lienol/)
-- [Lean_6.**内核固件地址](https://op.dllkids.xyz/op/firmware/Lean/)
-- [immortalwrt-21.02固件](https://op.dllkids.xyz/op/firmware/ctc_21.02/)
-- [immortalwrt-18.06固件](https://op.dllkids.xyz/op/firmware/ctc_18.06/)
-- [nanopi-r2s固件下载](https://op.dllkids.xyz/op/firmware/nanopi-r2s/)
-- [nanopi-r4s固件下载](https://op.dllkids.xyz/op/firmware/nanopi-r4s/)
+- [openwrt ](https://op.dllkids.xyz/op/firmware/Lienol/)
+- [nanopi-r2s固件下载](https://op.dllkids.xyz/firmware/nanopi-r2s/)
+- [nanopi-r4s固件下载](https://op.dllkids.xyz/firmware/nanopi-r4s/)
 
 ### 默认插件包含:
 
