@@ -28,7 +28,7 @@
 [![Lean](https://img.shields.io/badge/package-Lean-success.svg?style=flat&logo=appveyor)](https://github.com/coolsnowwolf/lede)
 ##### 固件下载:
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok8/Bulid_wrt?style=for-the-badge&label=固件下载)](https://github.com/kenzok8/Bulid_wrt/releases/latest)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok8/Bulid_Wrt?style=for-the-badge&label=固件下载)](https://github.com/kenzok8/Bulid_Wrt/releases/latest)
 
 
 ##### 固件下载链接
