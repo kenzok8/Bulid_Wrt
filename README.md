@@ -28,40 +28,53 @@
 [![Lean](https://img.shields.io/badge/package-Lean-success.svg?style=flat&logo=appveyor)](https://github.com/coolsnowwolf/lede)
 ##### 固件下载:
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok78/Bulid_Wrt?style=for-the-badge&label=Download)](https://github.com/kenzok78/Bulid_Wrt/actions)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/kenzok8/Bulid_wrt?style=for-the-badge&label=固件下载)](https://github.com/kenzok8/Bulid_wrt/releases/latest)
 
-##### 特色:
 
-+ 官网源码,内核5.15 最新源码同步.
+##### 固件下载链接
 
-+ 原生纯净,包含ipv6,主流开源插件.
+- [Lienol固件地址](https://op.dllkids.xyz/op/firmware/Lienol/)
+- [Lean_6.**内核固件地址](https://op.dllkids.xyz/op/firmware/Lean/)
+- [immortalwrt-21.02固件](https://op.dllkids.xyz/op/firmware/ctc_21.02/)
+- [immortalwrt-18.06固件](https://op.dllkids.xyz/op/firmware/ctc_18.06/)
+- [nanopi-r2s固件下载](https://op.dllkids.xyz/op/firmware/nanopi-r2s/)
+- [nanopi-r4s固件下载](https://op.dllkids.xyz/op/firmware/nanopi-r4s/)
 
-+ 针对国内特殊网络环境,自定义优化.
+### 默认插件包含:
 
-+ 清爽主题argon,nginx可玩性扩展.
-
-+ 无需专业知识,云编译定制编译固件.
-
-+ 持续更新,定时自动云编译更新固件.
-
-##### 关于Secrets,TOKEN的小知识
-
-* 云编译需要 [在此](https://github.com/settings/tokens) 创建个token,然后在此仓库Settings->Secrets中添加个名字为REPO_TOKEN的Secret,填入token值
-
-* 在仓库Settings->Secrets中添加 SCKEY 可通过[Server酱](http://sc.ftqq.com) 推送编译结果到微信
-
-* 在仓库Settings->Secrets中添加 TELEGRAM_CHAT_ID, TELEGRAM_TOKEN 可推送编译结果到Telegram Bot
-
-[另外仓库| 四个主流代码x86固件编译](https://github.com/kenzok78/Build-OpenWrt)
-
-##### 默认插件包含:
-
-+ Opkg 软件包管理
-+ ssr-plus
-+ openclash
-+ passwall
++ SSR Plus 
++ passwall2
 + bypass
++ openclash
++ 动态DDNS
 + UPNP 自动端口转发
-+ Turbo ACC 网络加速
++ 默认多个主题
++ 默认管理 IP: 192.168.1.252, 用户名 root，密码 password
 
-##### 默认后台地址 192.168.1.252,密码 root
+* 修改默认ip
+
+```bash
+sed -i 's/192.168.1.1/192.168.3.1/g' package/base-files/files/bin/config_generate
+```
+* 删除原主题	
+```bash
+rm -rf package/lean/luci-theme-argon
+```
+
+* 添加新的主题
+```bash
+git clone https://github.com/kenzok8/luci-theme-ifit.git package/lean/luci-theme-ifit
+```
+* 添加常用软件包
+```bash
+git clone https://github.com/kenzok8/openwrt-packages.git package/openwrt-packages
+```
+* 删除默认密码
+```bash
+sed -i "/CYXluq4wUazHjmCDBCqXF/d" package/lean/default-settings/files/zzz-default-settings
+```
+
+* 取消bootstrap为默认主题	
+```bash
+sed -i '/set luci.main.mediaurlbase=\/luci-static\/bootstrap/d' feeds/luci/themes/luci-theme-bootstrap/root/etc/uci-defaults/30_luci-theme-bootstrap
+```
