@@ -186,9 +186,6 @@ jobs:
         cd openwrt
         echo -e "$(($(nproc)+1)) thread compile"
         make -j$(($(nproc)+1)) || make -j1 V=s || true
-        sed -i "s/# CONFIG_IB is not set/CONFIG_IB=y/" .config
-        rm -rf staging_dir/toolchain-*/bin/*openwrt-linux-musl-lto-dump
-        rm -rf staging_dir/toolchain-*/initial
 
     - name: Organize files
       id: organize
