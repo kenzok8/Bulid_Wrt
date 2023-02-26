@@ -93,11 +93,11 @@ jobs:
 
     - name: Clone source code
       run: |
-        if [ "${{matrix.target}}" == "ipq807x_ipq60xx" ]; then
+        if [ "${{matrix.target}}" == "mediatek_gl_mt7981" ]; then
             git clone https://github.com/gl-inet/gl-infra-builder.git
             cd gl-infra-builder
-            python3 setup.py -c configs/config-wlan-ap.yml
-            ln -sf gl-infra-builder/wlan-ap/openwrt ../openwrt
+            python3 setup.py -c configs/config-mt798x-7.6.6.1.yml
+            ln -sf gl-infra-builder/mt7981 ../openwrt
             cd -
         elif [ ! "${{ env.REPO_BRANCH }}" ]; then
           REPO_BRANCH="$((curl -gs -H 'Content-Type: application/json' \
@@ -148,6 +148,15 @@ jobs:
         if [ -n "$(ls -A "devices/${{matrix.target}}/patches" 2>/dev/null)" ]; then
           find "devices/${{matrix.target}}/patches" -type f -name '*.patch' -print0 | sort -z | xargs -I % -t -0 -n 1 sh -c "cat '%'  | patch -d './' --no-backup-if-mismatch --merge -p1 -E --forward"
         fi
+        sed -i '$a  \
+        CONFIG_CPU_FREQ_GOV_POWERSAVE=y \
+        CONFIG_CPU_FREQ_GOV_USERSPACE=y \
+        CONFIG_CPU_FREQ_GOV_ONDEMAND=y \
+        CONFIG_CPU_FREQ_GOV_CONSERVATIVE=y \
+        CONFIG_CRYPTO_CHACHA20_NEON=y \
+        CONFIG_CRYPTO_CHACHA20POLY1305=y \
+        CONFIG_FAT_DEFAULT_IOCHARSET="utf8" \
+        ' `find target/linux -path "target/linux/*/config-*"`
 
     - name: Defconfig
       run: |
@@ -160,7 +169,7 @@ jobs:
       run: |
         cd openwrt
         make download -j$(($(nproc)+1)) &
-        sleep 5
+        sleep 3
 
     - name: Cache
       uses: stupidloud/cachewrtbuild@main
@@ -186,6 +195,9 @@ jobs:
         cd openwrt
         echo -e "$(($(nproc)+1)) thread compile"
         make -j$(($(nproc)+1)) || make -j1 V=s || true
+        sed -i "s/# CONFIG_IB is not set/CONFIG_IB=y/" .config
+        rm -rf staging_dir/toolchain-*/bin/*openwrt-linux-musl-lto-dump
+        rm -rf staging_dir/toolchain-*/initial
 
     - name: Organize files
       id: organize
