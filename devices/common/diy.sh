@@ -24,10 +24,11 @@ sed -i "s/procd-ujail//" include/target.mk
 
 sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-defaults.mk
 
+
 mv -f feeds/kenzok8/r81* tmp/
 
-sed -i "s/192.168.1.1/192.168.1.252/" package/feeds/kenzok8/base-files/files/bin/config_generate
-sed -i "s/192.168.1.1/192.168.1.252/" package/base-files/files/bin/config_generate
+sed -i "s/192.168.1/10.0.0/" package/feeds/kenzok8/base-files/files/bin/config_generate
+sed -i "s/192.168.1/10.0.0/" package/base-files/files/bin/config_generate
 
 (
 svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic/hack-5.10 target/linux/generic/hack-5.10
