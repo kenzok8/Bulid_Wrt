@@ -3,7 +3,7 @@
 shopt -s extglob
 
 [ ! -f feeds.conf ] && {
-sed -i '$a src-git kenzok8 https://github.com/kenzok8/jell.git;main' feeds.conf.default
+sed -i '$a src-git kiddin9 https://github.com/kiddin9/openwrt-packages.git;master' feeds.conf.default
 }
 
 sed -i "s?targets/%S/packages?targets/%S/\$(LINUX_VERSION)?" include/feeds.mk
@@ -11,7 +11,7 @@ sed -i "s?targets/%S/packages?targets/%S/\$(LINUX_VERSION)?" include/feeds.mk
 sed -i '/	refresh_config();/d' scripts/feeds
 
 ./scripts/feeds update -a
-./scripts/feeds install -a -p kenzok8 -f
+./scripts/feeds install -a -p kiddin9 -f
 ./scripts/feeds install -a
 
 echo "$(date +"%s")" >version.date
@@ -24,10 +24,15 @@ sed -i "s/procd-ujail//" include/target.mk
 
 sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-defaults.mk
 
+status=$(curl -H "Authorization: token $REPO_TOKEN" -s "https://api.github.com/repos/kiddin9/openwrt-packages/actions/runs" | jq -r '.workflow_runs[0].status')
+while [ "$status" == "in_progress" ];do
+	sleep 5
+	status=$(curl -H "Authorization: token $REPO_TOKEN" -s "https://api.github.com/repos/kiddin9/openwrt-packages/actions/runs" | jq -r '.workflow_runs[0].status')
+done
 
-mv -f feeds/kenzok8/r81* tmp/
+mv -f feeds/kiddin9/r81* tmp/
 
-sed -i "s/192.168.1/10.0.0/" package/feeds/kenzok8/base-files/files/bin/config_generate
+sed -i "s/192.168.1/10.0.0/" package/feeds/kiddin9/base-files/files/bin/config_generate
 sed -i "s/192.168.1/10.0.0/" package/base-files/files/bin/config_generate
 
 (
@@ -36,7 +41,7 @@ rm -rf target/linux/generic/hack-5.10/{220-gc_sections*,781-dsa-register*,780-dr
 ) &
 
 sed -i "/BuildPackage,miniupnpd-iptables/d" feeds/packages/net/miniupnpd/Makefile
-sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/kenzok8/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
+sed -i 's/\/cgi-bin\/\(luci\|cgi-\)/\/\1/g' `find package/feeds/kiddin9/luci-*/ -name "*.lua" -or -name "*.htm*" -or -name "*.js"` &
 sed -i 's/Os/O2/g' include/target.mk
 sed -i "/mediaurlbase/d" package/feeds/*/luci-theme*/root/etc/uci-defaults/*
 sed -i 's/=bbr/=cubic/' package/kernel/linux/files/sysctl-tcp-bbr.conf
@@ -54,11 +59,11 @@ sed -i \
 	-e "s/+nginx\( \|$\)/+nginx-ssl\1/" \
 	-e 's/+python\( \|$\)/+python3/' \
 	-e 's?../../lang?$(TOPDIR)/feeds/packages/lang?' \
-	package/feeds/kenzok8/*/Makefile
+	package/feeds/kiddin9/*/Makefile
 
 (
 if [ -f sdk.tar.xz ]; then
-	sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kenzok8/*/Makefile
+	sed -i 's,$(STAGING_DIR_HOST)/bin/upx,upx,' package/feeds/kiddin9/*/Makefile
 	mkdir sdk
 	tar -xJf sdk.tar.xz -C sdk
 	cp -rf sdk/*/staging_dir/* ./staging_dir/
