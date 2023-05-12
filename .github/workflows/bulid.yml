@@ -61,21 +61,13 @@ jobs:
         df -h
 
     - name: Compile Openwrt
-      id: compileopenwrt
       run: |
-        if [ "${{ matrix.model }}" = "nanopi-r5s" ]; then
-          bash <(curl -sS https://raw.githubusercontent.com/kenzok78/build_script/main/openwrt/build.sh) ${{ matrix.tag.type }} r5s
-        elif [ "${{ matrix.model }}" = "x86_64" ]; then
-          bash <(curl -sS https://raw.githubusercontent.com/kenzok78/build_script/main/openwrt/build.sh) ${{ matrix.tag.type }} x86
-        else
-          bash <(curl -sS https://raw.githubusercontent.com/kenzok78/build_script/main/openwrt/build.sh) ${{ matrix.tag.type }}
-        fi
+        bash <(curl -sS https://raw.githubusercontent.com/kenzok78/build_script/main/openwrt/build.sh) ${{ matrix.tag.type }} ${{ matrix.model }}
         cd openwrt
         tags=$(git describe --abbrev=0 --tags)
         echo "latest_release=$tags" >>$GITHUB_ENV
 
     - name: Assemble Artifact
-      id: assemble_artifact
       run: |
         mkdir -p rom info
         if [ "${{ matrix.model }}" = "nanopi-r4s" ]; then
@@ -97,9 +89,13 @@ jobs:
           cd rom && sha256sum *gz > ../info/sha256sums.txt
         fi
 
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.model }}-${{ matrix.tag.version }}
+        path: rom/*.gz
+
     - name: Create release
-      if: env.release != 'false'
-      id: create_release
       uses: ncipollo/release-action@v1.11.1
       with:
         name: openwrt-${{ env.latest_release }}
@@ -107,5 +103,5 @@ jobs:
         tag: ${{ env.latest_release }}
         commit: main
         replacesArtifacts: true
-        token: ${{ secrets.ACCESS_TOKEN }}
+        token: ${{ secrets.workflow_token }}
         artifacts: rom/*
