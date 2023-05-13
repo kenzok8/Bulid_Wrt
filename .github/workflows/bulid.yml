@@ -62,7 +62,7 @@ jobs:
 
     - name: Compile Openwrt
       run: |
-        bash <(curl -sS https://raw.githubusercontent.com/kenzok78/build_script/main/openwrt/build.sh) ${{ matrix.tag.type }} ${{ matrix.model }}
+        bash <(curl -sS https://raw.githubusercontent.com/kenzok78/build_script/main/openwrt/build.sh ) ${{ matrix.tag.type }} ${{ matrix.model }}
         cd openwrt
         tags=$(git describe --abbrev=0 --tags)
         echo "latest_release=$tags" >>$GITHUB_ENV
