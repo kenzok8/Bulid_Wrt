@@ -2,16 +2,17 @@
 
 shopt -s extglob
 SHELL_FOLDER=$(dirname $(readlink -f "$0"))
-bash $SHELL_FOLDER/../common/kernel_5.15.sh
 
 rm -rf package/boot/uboot-rockchip
 svn export --force https://github.com/coolsnowwolf/lede/trunk/package/boot/uboot-rockchip package/boot/uboot-rockchip
 svn export --force https://github.com/coolsnowwolf/lede/trunk/package/boot/arm-trusted-firmware-rockchip-vendor package/boot/arm-trusted-firmware-rockchip-vendor
-rm -rf target/linux/rockchip/!(Makefile|patches-5.15)
+
+rm -rf target/linux/generic target/linux/rockchip/!(Makefile)
+
+svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic target/linux/generic
 svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/rockchip target/linux/rockchip
-rm -rf target/linux/rockchip/{.svn,patches-5.15/.svn}
-svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/rockchip/patches-5.15 target/linux/rockchip/patches-5.15
-rm -rf target/linux/rockchip/patches-5.15/{002-net-usb*,003-dt-bindings*,006-rockchip-rk3399*}
+
+curl -sfL https://raw.githubusercontent.com/coolsnowwolf/lede/master/include/kernel-5.15 -o include/kernel-5.15
 
 curl -sfL https://raw.githubusercontent.com/coolsnowwolf/lede/master/package/kernel/linux/modules/video.mk -o package/kernel/linux/modules/video.mk
 
