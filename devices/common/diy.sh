@@ -2,7 +2,7 @@
 #=================================================
 shopt -s extglob
 
-sed -i '$a src-git jell https://github.com/kenzok8/jell.git;main' feeds.conf.default
+sed -i '$a src-git jell https://github.com/kiddin9/openwrt-packages.git;master' feeds.conf.default
 sed -i "/telephony/d" feeds.conf.default
 
 sed -i "s?targets/%S/packages?targets/%S/\$(LINUX_VERSION)?" include/feeds.mk
@@ -22,15 +22,6 @@ coremark wget-ssl curl autocore htop nano zram-swap kmod-lib-zstd kmod-tcp-bbr b
 sed -i "s/procd-ujail//" include/target.mk
 
 sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-defaults.mk
-
-status=$(curl -H "Authorization: token $REPO_TOKEN" -s "https://api.github.com/repos/kenzok8/jell/actions/runs" | jq -r '.workflow_runs[0].status')
-echo "$status"
-while [[ "$status" == "in_progress" || "$status" == "queued" ]];do
-	echo "wait 5s"
-	sleep 5
-	status=$(curl -H "Authorization: token $REPO_TOKEN" -s "https://api.github.com/repos/kenzok8/jell/actions/runs" | jq -r '.workflow_runs[0].status')
-done
-
 
 mv -f feeds/jell/r81* tmp/
 
