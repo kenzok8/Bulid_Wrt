@@ -2,19 +2,19 @@
 [1]: https://img.shields.io/badge/license-GPLV2-brightgreen.svg
 [2]: /LICENSE
 [3]: https://img.shields.io/badge/PRs-welcome-brightgreen.svg
-[4]: https://github.com/kenzok78/Bulid_Wrt/pulls
+[4]: https://github.com/kenzok8/Bulid_Wrt/pulls
 [5]: https://img.shields.io/badge/Issues-welcome-brightgreen.svg
-[6]: https://github.com/kenzok78/Bulid_Wrt/issues/new
+[6]: https://github.com/kenzok8/Bulid_Wrt/issues/new
 [7]: https://img.shields.io/github/v/release/hyird/Action-Openwrt
-[8]: https://github.com/kenzok78/Bulid_Wrt/releases
+[8]: https://github.com/kenzok8/Bulid_Wrt/releases
 [10]: https://img.shields.io/badge/Contact-telegram-blue
 [11]: https://t.me/joinchat/JjxmyRZZXJWb74I-sCrryA
-[12]: https://github.com/kenzok78/Bulid_Wrt/actions/workflows/Bulid_Wrt.yml/badge.svg
-[13]: https://github.com/kenzok78/Bulid_Wrt/actions
+[12]: https://github.com/kenzok8/Bulid_Wrt/actions/workflows/Bulid_Wrt.yml/badge.svg
+[13]: https://github.com/kenzok8/Bulid_Wrt/actions
 
 [![license][1]][2]
-[![GitHub Stars](https://img.shields.io/github/stars/kenzok78/Bulid_Wrt.svg?style=flat-square&label=Stars)](https://github.com/kenzok78/Bulid_Wrt/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/kenzok78/Bulid_Wrt.svg?style=flat-square&label=Forks)](https://github.com/kenzok78/Bulid_Wrt)
+[![GitHub Stars](https://img.shields.io/github/stars/kenzok8/Bulid_Wrt.svg?style=flat-square&label=Stars)](https://github.com/kenzok8/Bulid_Wrt/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/kenzok8/Bulid_Wrt.svg?style=flat-square&label=Forks)](https://github.com/kenzok8/Bulid_Wrt)
 [![PRs Welcome][3]][4]
 [![Issue Welcome][5]][6]
 [![AutoBuild][12]][13]
@@ -33,15 +33,11 @@
 
 ##### 固件下载链接
 
-- [openwrt ](https://op.dllkids.xyz/op/firmware/Lienol/)
-- [nanopi-r2s固件下载](https://op.dllkids.xyz/firmware/nanopi-r2s/)
-- [nanopi-r4s固件下载](https://op.dllkids.xyz/firmware/nanopi-r4s/)
+- [openwrt ](https://op.dllkids.xyz/op/firmware/)
 
 ### 默认插件包含:
 
-+ SSR Plus 
-+ passwall2
-+ bypass
++ SSR Plus
 + openclash
 + 动态DDNS
 + UPNP 自动端口转发

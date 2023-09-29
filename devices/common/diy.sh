@@ -2,7 +2,7 @@
 #=================================================
 shopt -s extglob
 
-sed -i '$a src-git jell https://github.com/kiddin9/openwrt-packages.git;master' feeds.conf.default
+sed -i '$a src-git jell https://github.com/kenzok8/jell.git;main' feeds.conf.default
 sed -i "/telephony/d" feeds.conf.default
 
 sed -i "s?targets/%S/packages?targets/%S/\$(LINUX_VERSION)?" include/feeds.mk
@@ -25,8 +25,8 @@ sed -i "s/^.*vermagic$/\techo '1' > \$(LINUX_DIR)\/.vermagic/" include/kernel-de
 
 mv -f feeds/jell/r81* tmp/
 
-sed -i "s/192.168.1/10.0.0/" package/feeds/jell/base-files/files/bin/config_generate
-sed -i "s/192.168.1/10.0.0/" package/base-files/files/bin/config_generate
+sed -i "s/192.168.1/192.168.1.251/" package/feeds/jell/base-files/files/bin/config_generate
+sed -i "s/192.168.1/192.168.1.251/" package/base-files/files/bin/config_generate
 
 (
 svn co https://github.com/coolsnowwolf/lede/trunk/target/linux/generic/hack-5.15 target/linux/generic/hack-5.15
